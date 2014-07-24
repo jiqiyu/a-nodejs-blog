@@ -1,0 +1,19 @@
+<h2 class="aside-title">常用標籤</h2>
+<div id="tag-wrapper" class="tagcloud">
+  <% if (typeof tag === 'string') { %>
+  <%= tag %>
+  <% } else { %>
+  
+    <% var n = 0, l = tag.length;
+       tag.forEach(function(el) {
+         if (el.npost > postsMoreThan) { %>
+  <a href="/tag/<%= el.name %>" alt="<%= el.npost%>篇文章" title="<%= el.npost%>篇文章"><%= el.name %></a>
+    <%   } else if (el.npost === 0) {
+           if (++n === l) { %>
+  無
+    <%
+           }
+         } 
+       });
+     } %>
+</div>

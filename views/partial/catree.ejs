@@ -1,0 +1,43 @@
+<h2 class="aside-title">文章分類</h2>
+<ul>
+<% if (typeof cat === 'string') { %>
+<%= cat %>
+<% } else { %>
+
+<% var d = 0, str = '', url = '', ncat = 0;
+   if (cat.unfold.length) {
+     cat.unfold.forEach(function(el) { %>
+<%     if (el.haschildren && el.nsub) {
+         var total = el.npost;
+         var self = el.nselfpost ? el.nselfpost + '篇' : '無';
+         var sub = el.nsub ? el.nsub + '篇' : '無';
+         str = '當前分類: ' + self + ', 下屬分類: ' + sub;
+         var subCatId = el.subcat.id.join(',');
+         url = '/category/'.concat(el.name, '?id=', el._id, '&subcat=', subCatId);
+       } else {
+         var total = el.nselfpost;
+         str = el.nselfpost ? el.nselfpost + '篇' : '無';
+         url = '/category/'.concat(el.name, '?id=', el._id);
+       }
+       if (total === 0) { ++ncat; }
+       if (el.depth === d && total !== 0) { %>
+  <li><a href="<%= url %>" title="<%= str %>"><%= el.name %></a> <span class="post-num">(<%= total %>)</span></li>
+<%     } else if (el.depth > d && total !== 0) {
+         d = el.depth %>
+  <ul>
+    <li><a href="<%= url %>" title="<%= str %>"><%= el.name %></a> <span class="post-num">(<%= total %>)</span></li>
+  <%   } else if (el.depth < d && total !== 0) {
+         for (var i=0; i<(d-el.depth); i++) { %>
+  </ul>
+      <% }
+         d = el.depth; %>
+  <li><a href="<%= url %>" title="<%= str %>"><%= el.name %></a> <span class="post-num">(<%= total %>)</span></li>
+<%     }
+       if (ncat === cat.unfold.length) { %>
+  暫無
+<%     }
+     });
+   }
+
+  } %>
+</ul>

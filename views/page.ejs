@@ -1,0 +1,80 @@
+<%- include partial/head %>
+
+  <div class="wrapper">
+  <article>
+  <% if (posts && posts.length) {
+         posts.forEach(function(el) {
+  %>
+  <section class="post-head">
+  <h2 class="title">
+    <a href="/post/<%= el._id %>"><%= el.title %></a>
+    <i class="author">By <%= el.author %> On <%= el.date %> @<%= el.time %></i>
+  </h2>
+  <div class="post-meta">
+    <img src="/images/cat.gif">
+    <span>
+    <% var catlen=el.catName.length;
+       if (catlen) {
+       el.catName.forEach(function(e, idx) { %>
+      <a href="/category/<%= e %>?id=<%= el.catid[idx] %>"><%= e %></a><%= (idx===(catlen-1)) ? '' : ',' %>
+    <% })
+      } else { %>無 <% } %>
+    </span>
+    <img src="/images/tag.gif">
+    <span>
+    <% var l=el.tagName.length;
+       if (l) {
+       el.tagName.forEach(function(e, idx) {
+       if (e === '沒有標籤' || !l) { %>
+      無
+      <% } else { %>
+      <a href="/tag/<%= e %>"><%= e %></a><%= (idx===(l-1)) ? '' : ',' %>
+    <%   }
+       })
+      } else { %>無 <% } %>
+    </span>
+    <img src="/images/comment.gif"><span><a href="">評論(<%= el.commentid.length %>)</a></span>
+  </div>
+  </section>
+  <% if (el.content) { %>
+  <section class="post-content">
+    <% if (el.more >= 0) { %>
+    <%- el.subcontent %>
+    <% } else if (el.readmore >= 0) { %>
+    <%= el.subcontent %>
+    <% } else { %>
+    <%- el.content %>
+    <% } %>
+    <% if (el.readmore > 0) { %>
+  <span class="readmore"><a href="/post/<%= el._id %>">……</a></span>
+    <% } %>
+  </section>
+  <% } %>
+  <%
+         });
+     }
+  %>
+  <div style="clear: both;"></div>
+  <nav class="page">
+    <% if (page.currPage < page.maxPage) { %>
+    <a href="<%= '/post/page/' + (page.currPage+1) + '/?curr=' + page.currPage + '&since=' + page.pageSince + '&max=' + page.maxPage %>" > << 較舊的文章</a>
+    <% } %>
+    <% if (page.currPage > 1) { %>
+    <a href="<%= '/post/page/' + (page.currPage-1) + '/?curr=' + page.currPage + '&since=' + page.pageSince + '&max=' + page.maxPage %>" > 較新的文章 >></a>
+    <% } %>
+  </nav>
+
+  </article>
+
+  <aside>
+    <section id="category-tree">
+      <%- include partial/catree %>
+    </section>
+    <section id="tags">
+      <%- include partial/tagcloud %>
+    </section>
+  </aside>
+  
+  </div>
+
+<%- include partial/foot %>

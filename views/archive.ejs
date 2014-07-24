@@ -1,0 +1,14 @@
+<%- include partial/head %>
+
+  <div class="wrapper">
+  <h2><%= title %></h2>
+  <% if (type==='theCat' || type==='theTag') { %>
+  <ul class="archivelist">
+  <% posts.forEach(function(el) { %>
+    <li><a href="/post/<%= el._id %>"><%= el.title %></a></li>
+  <% }); %>
+  </ul>
+  <% } %>
+  </div>
+
+<%- include partial/foot %>

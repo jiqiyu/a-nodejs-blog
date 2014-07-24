@@ -1,0 +1,40 @@
+<%- include partial/cpHead %>
+
+<div class="wrapper cp-wrapper">
+
+<% if (level < ul.editor) { %> <font color="#aaaaaa" size="6">編輯或以上權限的用戶方可管理標籤</font> <% } else { %>
+
+  <div class="cp-tag">
+  <% if (typeof tag === 'string') { %>
+  <font color="#aaaaaa" size="6"><%= tag %></font>
+  <% } else { %>
+    <div class="op-intro">點擊標籤以重命名，或開啓（關閉）<a id="open-delete">刪除標籤</a></div>
+    <% var n = 0, l = tag.length;
+       if (l) {
+       tag.forEach(function(el) {
+         if (el.npost > postsMoreThan) { %>
+    
+    <div class="onetag" id="<%= el._id %>"><div class="delete-tag"><a href="/control-panel/tag/delete/<%= el._id %>">X</a></div><a alt="<%= el.npost %>篇文章" title="<%= el.npost %>篇文章"><%= el.name %><font color="#aaaaaa" size="1"> (<%= el.npost%>)</font></a></div>
+    <%   } else if (el.npost === 0) {
+           if (++n === l) { %>
+  無
+    <%
+           }
+         } 
+       });
+      } else { %>無 <% } %>
+  <% } %>
+    </div>
+
+<% } %>
+
+</div>
+
+<div id="tag-rename-div"><div id="close-tag-rename" style="font-size: 1.4em;">X</div>
+  <input type="text" value="" id="input-tagname"><input type="button" value="重命名" id="submit-new-tagname">
+  <div id="result" class="prompt" style="display: none;"></div>
+</div>
+
+<script src="/javascripts/tag.js"></script>
+
+<%- include partial/cpFoot %>

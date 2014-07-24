@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title><%= title %></title>
+    <script src="/javascripts/531ae90180772f947d000001.js"></script>
+    <link rel="shortcut icon" rel="icon" href="/images/m-99ffff.ico" type="image/x-icon">
+    <style>
+      body {width: 420px; margin: auto auto; clear: both;}
+      header {float: left;}
+      img {float: left; margin-top: 27px; margin-right: 15px;}
+      p {color: #000; font-size: 22px; line-height: 130%; background: #fff; height: 225px; padding-right: 7px; padding-top: 12px;}
+      form * {float: right; clear: both; margin: 10px;}
+      div {clear: both; margin-top: 20px;}
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="/images/welcome.jpg">
+      <!-- <p style="line-height: 120%">This is your first time opening the site, please add a SUPERUSER, the most powerful man:</p> -->
+      <p>歡迎，這是您第一次打開網站，在您繼續使用網站之前，您需要首先添加一位擁有網站所有權限的超級用戶：</p>
+    </header>
+    <form action="/welcome" method="post">
+      <label>用戶名：<input type="text" name="suname" id="suname"></label>
+      <label>密碼：<input type="password" name="psw1" id="psw1"></label>
+      <label>確認一次密碼：<input type="password" name="psw2" id="psw2"></label>
+      <div><input type="submit" value="添加超級用戶"></div>
+    </form>
+    <script>
+      $(function() {
+        $("form").submit(function() {
+          if ($.trim($("#suname").val()) === "" ||
+              $("#psw1").val() === "" ||
+              $("#psw2").val() === "") {
+            alert("全部都要填，不可以有空的");
+            return false;
+          }
+          if ($("#psw1").val() !== $("#psw2").val()) {
+            alert("密碼兩次輸入得不一樣，請重輸");
+            return false;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

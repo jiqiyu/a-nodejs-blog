@@ -1,0 +1,124 @@
+<%- include partial/cpHead %>
+
+<div class="wrapper cp-wrapper">
+    
+<% if (level !== ul.su) { %> <font color="#aaaaaa" size="6">惟超級用戶可管理用戶</font> <% } else { %>
+  <div class="cat-form">
+  <div id="blinking-border" style="position: absolute; height: 480px; width: 420px; left: 180px; top: 159px; border: 7px solid #FF6633; display: none;"></div>
+  <section class="edit-cat">
+    <h2>用戶</h2><div id="result" class="prompt" style="display: none;"></div>
+    <% if (error) { %>
+    <div class="prompt error" id="prompt"><%= error %></div>
+    <% } %>
+    <% if (success) { %>
+    <div class="prompt success" id="prompt"><%= success %></div>
+    <% } %>
+    <form id="adduser" method="post" action="/control-panel/user/add">
+      <div>
+	    <label for="username">昵稱&nbsp;</label>
+	    <input name="username" id="username" type="text" value="" size="30">
+	    <p>也是用戶ID和顯示在屏幕上的名稱</p>
+      </div>
+      <div>
+	    <label for="pass1">密碼&nbsp;</label>
+	    <input name="pass1" id="pass1" type="password" value="" size="30">
+      </div>
+      <div style="margin-top: .2em;">
+	    <label for="pass2">確認密碼&nbsp;</label>
+	    <input name="pass2" id="pass2" type="password" value="" size="26">
+        <p>安全起見，請儘量使用複雜密碼，且長度不少於六位</p>
+      </div>
+      <div>
+	    <label for="email">電郵（選填）</label>
+	    <input name="email" id="email" type="text" value="" size="22">
+        <p> </p>
+      </div>
+      <div class="form-field">
+	    <label for="role">角色</label>
+        <span id="superuser" style="display: none; margin-left: 5px; padding: 1px 5px; color: gray; background: white;">超級用戶</span>
+        <select name="role" id="role">
+	      <option value="0" selected="selected">普通用戶</option>
+          <option value="1">作者</option>
+          <option value="2">編輯</option>
+        </select>
+        <p>不同角色，相應的權限也不一樣。（詳見右下方提示文檔）</p>
+      </div>
+      <div>
+	    <label for="intro">簡介（選填）</label><br>
+	    <textarea name="intro" id="intro" rows="5" cols="40"></textarea>
+	    <p> </p>
+      </div>
+
+      <p class="submit">
+        <input type="submit" name="submit-user" id="submit-user" value="新增用戶"> —— 或 —— 
+        <input type="button" name="submit-edit" id="submit-edit" value="提交編輯">
+        <span id="cancel-edit" style="cursor: pointer;"><u>[重置表格]</u></span>
+      </p>
+    </form>
+  </section>
+  <section class="user-table">
+    <p><u>用戶列表</u></p><!-- <div id="del-result" class="prompt" style="display: none;"></div> -->
+    
+    <% if (deletionErr) { %>
+    <div class="prompt error" id="prompt"><%= deletionErr %></div>
+    <% } %>
+    <% if (deleted) { %>
+    <div class="prompt success" id="prompt"><%= deleted %></div>
+    <% } %>
+      
+    <table cellspacing="0" align="center">
+	  <thead>
+	    <tr>
+	      <!-- <th scope="col"><input type="checkbox" id="cb"></th> -->
+	      <th scope="col">昵稱</th>
+          <th scope="col">文章</th>
+          <th scope="col">評論</th>
+	      <th scope="col">電郵</th>
+	      <th scope="col">角色</th>
+          <th scope="col">簡介</th>
+	    </tr>
+	  </thead>
+
+	  <tfoot>
+	    <tr>
+	      <!-- <th scope="col"><input type="checkbox" id="cb-bot"></th> -->
+	      <th scope="col" style="min-width: 10.5em;">昵稱</th>
+          <th scope="col">文章</th>
+          <th scope="col">評論</th>
+	      <th scope="col">電郵</th>
+	      <th scope="col">角色</th>
+          <th scope="col">簡介</th>
+	    </tr>
+	  </tfoot>
+      
+      <tbody>
+        <% users.forEach(function(user) { %>
+        <tr id="user-<%= user._id %>"
+            onmouseover="javascript:$('#op-<%= user._id %>').css('display', 'block');"
+            onmouseout="javascript:$('#op-<%= user._id %>').css('display', 'none');"
+            style="height: 3.8em;">
+          <td style="padding-top: .8em;">
+            <strong><%= user.name %></strong><br>
+            <div id="op-<%= user._id %>" style="display: none; padding-top: 5px;">
+              <span><a href="javascript:loadEditForm('<%= user.name %>', '<%= user.level %>', '<%= user.email %>', '<%= user.intro %>');" title="更改用戶的角色或簡介" alt="更改用戶的角色或簡介" id="a-<%= user._id %>">編輯</a> </span>
+              <% if (user.level !== ul.su) { %> | <span><a href="/control-panel/user/del/<%= user._id %>" onclick="javascript:return confirm('確實要刪除？');">刪除此用戶</a></span> <% } %>
+            </div>
+          </td>
+          <td><%= user.postid ? user.postid.length : '——' %></td>
+          <td><%= user.commentid ? user.commentid.length : 0 %></td>
+          <td style="min-width: 9.5em; word-wrap: normal; word-break: keep-all;"><%= user.email || '未留' %></td>
+          <td id="td-role-<%= user.name %>"><%= role[user.level] %></td>
+          <td id="td-intro-<%= user.name %>" style="min-width: 12em;"><%= user.intro || '暫無' %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </section>
+  </div>
+<% } %>
+
+</div>
+
+<script src="/javascripts/manageUser.js"></script>
+
+<%- include partial/cpFoot %>

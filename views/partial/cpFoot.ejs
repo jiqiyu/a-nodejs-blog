@@ -1,0 +1,26 @@
+    <div id="popup-div"><div id="close-popup" style="font-size: 1.4em;">X</div>
+      <div id="tabs">
+        <a id="tab1" class="on">上傳</a>
+        <a id="tab2" class="off">庫存(todo)</a>
+      </div>
+      <div id="upload">
+        <form id="upload-form" name="upload" action="/control-panel/uploads?tab=upload" method="post" enctype="multipart/form-data">
+          <input type="file" name="file" id="control">
+          <input type="submit" name="submit" id="submit-file" value="上傳"><br><span style="font-family: SimSun; font-size: .9em; color: #888; font-style: oblique;">只可以上傳小於2M的媒體文件（圖片/音頻/視頻）或普通文檔（txt/html/word）</span><br>
+        </form>
+        <div id="file-details"></div>
+      </div>
+      <div id="files" style="display: none;"></div>
+    </div>
+    <footer class="site-foot cp-foot">
+      <section id="foot-doc">
+      <div class="fdoc-title">提示文檔</div>
+      <div class="fdoc-content">
+        <%= documents %>
+      </div>
+      </section>
+    </footer>
+    <script src="/javascripts/531ae90180772f947d000002.js"></script>
+    <script src="/javascripts/cpanel.js"></script>
+  </body>
+</html>

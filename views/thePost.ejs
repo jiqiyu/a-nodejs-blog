@@ -1,0 +1,51 @@
+<%- include partial/head %>
+  <div class="wrapper">
+  <article>
+  <section class="post-head">
+  <h2 class="title">
+    <a href="/post/<%= post._id %>"><%= post.title %></a>
+    <i class="author">By <%= post.author %> On <%= post.date %> @<%= post.time %></i>
+  </h2>
+  <div class="post-meta">
+    <img src="/images/cat.gif">
+    <span>
+    <% var cl=post.catName.length;
+       if (cl) {
+       post.catName.forEach(function(el, idx) { %>
+      <a href="/category/<%= el %>?id=<%= post.catid[idx] %>"><%= el %></a><%= (idx===(cl-1)) ? '' : ',' %>
+    <% });
+      } else { %>無 <% } %>
+    
+    </span>
+    <img src="/images/tag.gif">
+    <span>
+    <% var l=post.tagName.length;
+       if (l) {
+       post.tagName.forEach(function(el, idx) {
+       if (el === '沒有標籤') { %>
+      無
+      <% } else { %>
+      <a href="/tag/<%= el %>"><%= el %></a><%= (idx===(l-1)) ? '' : ',' %>
+    <%   }
+       });
+      } else { %>無 <% } %>
+    </span>
+    <img src="/images/comment.gif">
+    <span><a href="">評論(<%= post.commentid.length %>)</a></span>
+  </div>
+  </section>
+  <section class="post-content inside">
+  <%- post.content %>
+  </section>
+  </article>
+
+  <!-- <section class="comments"><a href="#comments"></a> -->
+  <!--   用戶的評論 -->
+  <!-- </section> -->
+  <!-- <section class="post-comment"> -->
+  <!--   <textarea placeholder="發表評論"></textarea> -->
+  <!-- </section> -->
+  
+  </div>
+  
+<%- include partial/foot %>

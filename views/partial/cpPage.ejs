@@ -1,0 +1,143 @@
+  <table class="post-table" cellspacing="0">
+	<thead>
+	<tr>
+	<th scope="col" id="cb"><input type="checkbox"></th>
+	<th scope="col" id="title">Title</th>
+	<th scope="col" id="author">作者</th>
+	<th scope="col" id="categories">分类目录</th>
+	<th scope="col" id="tags">标签</th>
+	<th scope="col" id="comments">
+      <div><img alt="Comments" src="/images/comment-grey-bubble.png"></div>
+    </th>
+	<th scope="col" id="date">日期</th>
+	</tr>
+	</thead>
+
+	<tfoot>
+	<tr>
+	<th scope="col"><input type="checkbox"></th>
+	<th scope="col">Title</th>
+	<th scope="col">作者</th>
+	<th scope="col">分类目录</th>
+	<th scope="col">标签</th>
+	<th scope="col">
+      <div class="vers"><img alt="Comments" src="/images/comment-grey-bubble.png"></div>
+    </th>
+	<th scope="col">日期</th>
+	</tr>
+	</tfoot>
+
+	<tbody>
+    <% if (ontop.length) {
+         ontop.forEach(function(el) {
+    %>
+	<tr id='post-<%= el._id %>' valign="top"
+        onmouseover="javascript:$('#op-<%= el._id %>').css('display', 'block');"
+        onmouseout="javascript:$('#op-<%= el._id %>').css('display', 'none');"
+        style="height: 3.2em;">
+	  <th scope="row">
+        <input type="checkbox" name="post[]" value="<%= el._id %>">
+        <input type="hidden" name="top">
+      </th>
+      
+	  <td style="min-width: 135px;">
+        <strong><a href="/control-panel/post/edit/<%= el._id %>?au=<%= el.author %>&tag=<%= el.tagName.join(',') %>" title="编辑 &#8220;<%= el.title %>&#8221;">[置頂]<%= el.state===5 ? ' [私密] ' : ' ' %><%= el.title %></a></strong>
+	    <div id="op-<%= el._id %>" style="display: none; margin-right: 0; padding-right: 0;">
+          <% if (uid.toString() === el.authorid.toString() || (level > el.level && el.state !== 2 && el.state !== 5)) { %>
+          <span><a href="/control-panel/post/edit/<%= el._id %>?au=<%= el.author %>&tag=<%= el.tagName.join(',') %>" title="Edit this item">编辑</a> | </span> <% } %>
+          <!-- <span><a href="#" title="Edit this item inline">快速编辑(todo)</a> | </span> -->
+          <span><a title='Delete this item' href='/control-panel/post/delete/<%= el._id %>' onclick="javascript:return confirm('確實要刪除？');">刪除</a></span>
+          <% if (uid.toString() === el.authorid.toString() || (level > el.level && el.state !== 2 && el.state !== 5)) { %>
+          <span><a href="/post/<%= el._id %>" title="查看 &#8220;<%= el.title %>&#8221;" target="_blank" rel="permalink"> | 查看</a></span>
+          <% } %>
+        </div>
+      </td>
+
+      <td><a href="edit.php?post_type=post&amp;author=3"><%= el.author %></a></td>
+      
+      <td>
+      <% var l=el.catName.length;
+         el.catName.forEach(function(e, idx) { %>
+        <a href="/category/<%= e %>?id=<%= el.catid[idx] %>"><%= e %></a><%= (idx===(l-1)) ? '' : ',' %>
+      <% }) %>
+      </td>
+      
+      <td>
+      <% var l=el.tagName.length;
+         el.tagName.forEach(function(e, idx) { %>
+        <a href="/tag/<%= e %>"><%= e %></a><%= (idx===(l-1)) ? '' : ',' %>
+      <% }) %>
+      </td>
+      
+      <td>
+        <div>
+        <a href='/control-panel/post/<%= el._id%>/comments'><span><%= el.commentid.length %></span></a>
+        </div>
+      </td>
+      
+      <td><abbr title="<%= el.date %> <%= el.time %>"><%= el.date %></abbr><br><%= el.state===0 ? '草稿' : '已发布' %></td>
+      
+    </tr>
+  <%   });
+     }
+  %>
+
+  <% if (posts.length) {
+         posts.forEach(function(el) {
+  %>
+	<tr id='post-<%= el._id %>' valign="top"
+        onmouseover="javascript:$('#op-<%= el._id %>').css('display', 'block');"
+        onmouseout="javascript:$('#op-<%= el._id %>').css('display', 'none');"
+        style="height: 3.2em;">
+	  <th scope="row">
+        <input type="checkbox" name="post[]" value="<%= el._id %>">
+        <% if (el.state == 2) { %>
+        <input type="hidden" name="pri">
+        <% } %>
+      </th>
+      
+	    <td style="min-width: 135px;">
+          <strong><a href="/control-panel/post/edit/<%= el._id %>?au=<%= el.author %>&tag=<%= el.tagName.join(',') %>" title="编辑 &#8220;<%= el.title %>&#8221;"><%= el.state===2 ? '[私密]' : '' %><%= el.title %></a></strong>
+		  <div id="op-<%= el._id %>" style="display: none;">
+            <% if (uid.toString() === el.authorid.toString() || (level > el.level && el.state !== 2 && el.state !== 5)) { %>
+            <span><a href="/control-panel/post/edit/<%= el._id %>?au=<%= el.author %>&tag=<%= el.tagName.join(',') %>" title="Edit this item">编辑</a> | </span> <% } %>
+            <!-- <span><a href="#" title="Edit this item inline">快速编辑(todo)</a> | </span> -->
+            <span><a title='Delete this item' href='/control-panel/post/delete/<%= el._id %>' onclick="javascript:return confirm('確實要刪除？');">刪除</a></span>
+            <% if (uid.toString() === el.authorid.toString() || (level > el.level && el.state !== 2 && el.state !== 5)) { %>
+            <span><a href="/post/<%= el._id %>" title="查看 &#8220;<%= el.title %>&#8221;" target="_blank" rel="permalink"> | 查看</a></span>
+            <% } %>
+          </div>
+      </td>
+
+      <td><a href="edit.php?post_type=post&amp;author=3"><%= el.author %></a></td>
+      
+      <td>
+      <% var l=el.catName.length;
+         el.catName.forEach(function(e, idx) { %>
+        <a href="/category/<%= e %>?id=<%= el.catid[idx] %>"><%= e %></a><%= (idx===(l-1)) ? '' : ',' %>
+      <% }) %>
+      </td>
+      
+      <td>
+      <% var l=el.tagName.length;
+         el.tagName.forEach(function(e, idx) { %>
+        <a href="/tag/<%= e %>"><%= e %></a><%= (idx===(l-1)) ? '' : ',' %>
+      <% }) %>
+      </td>
+      
+      <td>
+        <div>
+        <a href='/control-panel/post/<%= el._id%>/comments'><span><%= el.commentid.length %></span></a>
+        </div>
+      </td>
+      
+      <td><abbr title="<%= el.date %> <%= el.time %>"><%= el.date %></abbr><br><%= el.state===0 ? '草稿' : '已发布' %></td>
+      
+    </tr>
+  <%   });
+     }
+  %>
+    
+  </tbody>
+  
+  </table>

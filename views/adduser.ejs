@@ -1,0 +1,52 @@
+<%- include partial/cpHead %>
+  <h1 id="add-new-user">添加新用户</h1>
+
+  <% if (error) { %>
+  <div class="prompt error" id="prompt"><%= error %></div>
+  <% } %>
+  <% if (success) { %>
+  <div class="prompt success" id="prompt"><%= success %></div>
+  <% } %>
+
+  <form action="/control-panel/user/add" method="post" name="adduser" id="adduser" class="add:users: validate">
+  <!--<input type="hidden" id="_wpnonce" name="_wpnonce" value="3df88e03ba" /><input type="hidden" name="_wp_http_referer" value="" />-->
+  <table class="form-table">
+	<tr class="form-field form-required">
+		<th scope="row"><label for="username">用户名 <span class="description">&nbsp;&nbsp;<font color=red>*</font></span></label>
+		<input name="action" type="hidden" id="action" value="adduser" /></th>
+		<td><input name="username" type="text" id="user_login" value="" aria-required="true" /></td>
+	</tr>
+	<tr class="form-field form-required">
+		<th scope="row"><label for="email">电子邮件 <span class="description">&nbsp;&nbsp;<font color=red>*</font></span></label></th>
+		<td><input name="email" type="text" id="email" value="" /></td>
+	</tr>
+	<tr class="form-field form-required">
+		<th scope="row"><label for="pass1">密码 <span class="description">(重复两次，必需)</span></label></th>
+		<td><input name="pass1" type="password" id="pass1" autocomplete="off" />
+		<br />
+		<input name="pass2" type="password" id="pass2" autocomplete="off" />
+		
+        <div id="pass-strength-result">强度</div>
+		<p class="description indicator-hint">提示：您的密码最好至少包含7个字符。为了保证密码强度，使用大小写字母，数字和符号，例如! " ? $ % ^ &amp; )。</p>
+        </td>
+	</tr>
+	<tr class="form-field">
+		<th scope="row"><label for="role">角色</label></th>
+		<td>
+          <select name="role" id="role">
+	        <option selected='selected' value='reg'>普通用戶</option>
+	        <option value='author'>作者</option>
+            <% if (level == ul.su) { %>
+            <option value='editor'>編輯</option>
+            <% } %>
+          </select>
+		</td>
+	</tr>
+	</table>
+<p class="submit">
+	<input name="adduser" type="submit" id="addusersub" class="button-primary" value="添加新用户" />
+    &nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:history.back();">取消，返回上一頁</a>
+</p>
+</form>
+
+<%- include partial/cpFoot %>

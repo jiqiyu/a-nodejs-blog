@@ -1,0 +1,24 @@
+<% if (name && (level > ul.reg)) {
+     if (ontop.length || posts.length) {
+%>
+  <%- include cpPage %>
+
+  <nav class="page cp-page">
+  <span>
+    <% if (page.currPage > 1) { %>
+    <a href="<%= '/control-panel/post/page/' + (page.currPage-1) + '/?curr=' + page.currPage + '&since=' + page.pageSince + '&max=' + page.maxPage %>" >&lt;&lt; 上一頁</a>
+    <% } %>
+  </span>
+  <span>
+  <% if (page.currPage < page.maxPage) { %>
+    <a href="<%= '/control-panel/post/page/' + (page.currPage+1) + '/?curr=' + page.currPage + '&since=' + page.pageSince + '&max=' + page.maxPage %>" >下一頁 &gt;&gt;</a>
+  <% } %>
+  </span>
+  </nav>
+  
+<%   } else { %>
+  <font color="#aaaaaa" size="6">您暫無文章</font>
+<%
+     }
+   }
+%>

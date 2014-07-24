@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <script>
+      function passResponse() {
+          var x = top.document.getElementById("upload-target");
+          var y = (x.contentWindow || x.contentDocument);
+          var z = top.document.getElementById("file-details");
+          if (y.document) {
+              y = y.document;
+          }
+          z.innerHTML = y.body.innerHTML;
+      }
+      window.onload=passResponse;
+    </script>
+  </head>
+  <body>
+    <div class="msg"><%= msg %>
+    <% if (msg === "文件已上傳") { %>
+    &nbsp;&nbsp;-&nbsp;&nbsp;<%= name %></div>
+    <% if (image) { %>
+    <img src="<%= url.src %>" alt="<%= name %>" title="<%= name %>" class="thumbnail" style="float: left;">
+    <% } else if (audio) { %>
+    <img src="/images/file-icon/Generic.ico" style="float: left;">
+    <% } else if (video) { %>
+    <img src="/images/file-icon/Movies.ico" style="float: left; margin: -.5em 0 0 -1.4em;">
+    <% } else if (msword) { %>
+    <img src="/images/file-icon/DOCX.ico" style="float: left;">
+    <% } else { %>
+    <img src="/images/file-icon/Clipping Generic.ico" style="float: left; margin: -1.8em 0 0 -1.6em">
+    <% } %>
+    <div class='info'>
+      <div>類型：<%= type %></div>
+      <div>大小：<%= size %> 字節</div>
+      <div>路徑： <%= url.src %></div>
+      <% if (image) { %>
+      <div class='cpimage'>
+        html(可自訂style) <input type="text" size="20" value="<%= url.html %>" onclick="select();" readonly><br>
+        markdown <input type="text" size="30" value="<%= url.markdown %>" onclick="select();" readonly>
+      </div>
+      <% } %>
+    </div>
+    <% } else { %> </div> <% } %>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title><%= title %></title>
+    <script src="/javascripts/531ae90180772f947d000001.js"></script>
+    <link rel='stylesheet' href='/stylesheets/reset.css'>
+    <link rel='stylesheet' href='/stylesheets/style.css'>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <style>
+      #popup-div {display: none;}
+    </style>
+  </head>
+  <body>
+    <header class="site-head">
+      <h1 class="logo">
+        <a href="/" title="mingri.org" alt="mingri.org">www.<img src="/images/m-66ffff.png" style="margin: 0 0.1em;">.ORG</a>
+      </h1>
+    </header>
+
+    <div class="wrapper userlogin">
+    <h2 class="fdoc-title userlogin-title">請填寫：</h2>
+
+    <% if (error) { %>
+    <div class="prompt error">
+    <%= error %>
+    </div>
+    <% } %>
+    
+    <% if (referrer === "cpanel") { %>
+	<form method="post" action="/login?ref=cpanel" class="fdoc-content">
+    <% } else { %>
+    <form method="post" action="/login" class="fdoc-content">
+    <% } %>
+      <p><input type="text" name="username" value="" size="45" placeholder="用戶名" autocomplete="off" class="text-inputbox">
+	  <input type="password" name="pwd" value="" size="45" placeholder="密碼" autocomplete="off" class="text-inputbox"></p>
+	  <p>
+        <input type="submit" value="登錄" class="bright-button-blue">
+      </p>
+   	</form>
+    </div>
+
+<%- include partial/cpFoot %>

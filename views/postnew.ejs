@@ -1,0 +1,180 @@
+<%- include partial/cpHead %>
+
+  <div class="wrapper cp-wrapper">
+  <div id="result" style="float: left; margin: 3px 0 10px 10px; font-size: 150%;"></div>
+  <div style="clear: both;"></div>
+  <form method="post" action="/control-panel/post/new" id="post-form" class="post-form">
+    <section class="post-main">
+    <input type="text" name="title" id="title" placeholder="文章標題" tabindex="10" autocomplete="off" class="inputarea"><br>
+    <!-- <div id="editable-div" contenteditable="true" data-placeholder='文章內容（支持markdown語法及常用html標籤）' class="editable-div"></div> -->
+    <!-- <textarea id="content" name="content" style="display: none;"></textarea> -->
+    <textarea id="content" name="content" placeholder="文章內容（支持markdown語法及<img>標籤）" rows="24" class="inputarea"></textarea>
+    </section>
+
+    <section class="post-submit">
+
+    <p class="submit">
+	  <input type="submit" name="submitpost" id="submit-post" value="發佈" tabindex="100" class="bright-button-blue">
+      <br><br><span class="small-title">—— 或者 ——</span><br><br>
+      <input type="button" name="save-draft" id="save-draft" class="button-primary" value="保存草稿 (todo)" tabindex="100" onclick="">&nbsp;&nbsp;<span class="small-title" style="margin:0; font-style: normal;">或</span>&nbsp;&nbsp;
+      <a href="/control-panel" style="color: blue;">取消，回控制台首頁</a>
+    </p>
+    <span class="small-title">—— 發佈選項 ——</span><br><br>
+    <input name="commentoff" type="checkbox" id="commentoff" class="css-checkbox lrg">
+    <label for="commentoff" class="css-label lrg web-two-style">關閉評論</label>
+    
+    <input name="ontop" type="checkbox" id="ontop" class="css-checkbox lrg">
+    <label for="ontop" class="css-label lrg web-two-style">置頂</label>
+    
+    <input name="isprivate" type="checkbox" id="isprivate" class="css-checkbox lrg">
+    <label for="isprivate" class="css-label lrg web-two-style">僅自己可見</label><br>
+    
+    <input name="appointed_time" type="checkbox" id="appointed_time" class="css-checkbox lrg">
+    <label for="appointed_time" class="css-label lrg web-two-style">在預設的時間發佈</label><br>
+    
+    <span id="appointment" class="appointment" style="display: none;">
+      <select name="month" id="month" title="月">
+        <% var mon = new Date().getMonth();
+           for (var i=0; i<12; i++) {
+             if (i === mon) { %>
+        <option value="<%= i %>" selected><%= i + 1 %></option>
+        <%   } else { %>
+        <option value="<%= i %>"><%= i + 1 %></option>
+        <%   }
+           } %>
+      </select> /
+      <input type="text" name="day" id="day" value="<%= new Date().getDate() %>" size="2" maxlength="2" autocomplete="off" title="日">,&nbsp;
+      <input type="text" name="year" id="year" value="<%= new Date().getFullYear() %>" size="4" maxlength="4" autocomplete="off" title="年">&nbsp;@&nbsp;
+      <input type="text" name="hour" id="hour" value="<%= new Date().getHours() %>" size="2" maxlength="2" autocomplete="off" title="時(0-23)">&nbsp;:&nbsp;
+      <input type="text" name="minute" id="minute" value="<%= new Date().getMinutes() %>" size="2" maxlength="2" autocomplete="off" title="分(0-59)">&nbsp;:&nbsp;
+      <input type="text" name="second" id="second" value="<%= new Date().getSeconds() %>" size="2" maxlength="2" autocomplete="off" title="秒(0-59)">
+    </span>
+    <div id="wrong-date"></div>
+    <!-- <hr><br> -->
+    <br><span class="small-title">—— 標籤 ——</span><br><br>
+    <input type="text" name="tag" id="post-tag" placeholder="標籤,以英文逗號分隔多個" size="22" tabindex="10" class="">&nbsp;&nbsp;<a style="cursor: pointer; color: blue;">常用標籤(todo)</a><br>
+    <div id="frequently_tagged_tags"><div>
+
+    <br><span class="small-title">—— 選擇一個分類 ——</span><br><br>
+    <% if (cat === "分類加載失敗了，刷新試下") { %>
+    <div><%= cat %></div>
+    <% } else if (cat === "尚無分類") { %>
+    <div id="category">
+      <label><input type="checkbox" name="category" value="未分類" checked="checked" disabled="disabled">未分類<br></label>
+      <% if (level >= ul.editor) { %>
+      <a id="create-newcat" style="cursor: pointer; color: blue;">+新建一個分類</a>
+      <% } %>
+    </div>
+    <% } else { %>
+    <div id="category">
+      <select name="category">
+    <%   if (cat.unfold.length) {
+           cat.unfold.forEach(function(el) { %>
+        <option value="<%= el._id %>"><%= el.space %><%= el.name %></option>
+    <%
+           });
+         } %>
+       </select>
+      <% if (level >= ul.editor) { %>      
+      <a id="create-newcat" style="cursor: pointer; color: blue;">+新建一個分類</a>
+      <% } %>
+    </div>
+    <% } %>
+    <div id="newcat" style="display:none; background-color: #FFFF66; margin-top: 5px; padding: 7px; border-radius: 5px;">
+      <label>新分類名：<input type="text" name="newcatname" size="20" placeholder="必填"></label><br>
+      <label>父分類：
+        <select name="parentid">
+          <option value="nil" selected="selected">無</option>
+          <% if (cat.unfold.length) {
+               cat.unfold.forEach(function(el) { %>
+          <option value="<%= el._id %>,<%= el.depth %>"><%= el.space %><%= el.name %></option>
+          <%   });
+             } %>
+        </select>
+      </label><br><br>
+      <a id="cancel-newcat" style="color: blue; cursor: pointer;">取消，回已有分類裏選</a>
+    </div><br>
+    <span class="small-title">—— 作者 ——</span><br><br>
+    <select name="author" id="post-author"
+      <% if (authorList.length === 1) { %> disabled <% } %>
+    >
+    <% authorList.forEach(function(el, index) {
+         if (index === 0) { %>
+      <option selected='selected' value='<%= el._id %>,<%= el.level %>,<%= el.name %>'>作者 <%= el.name %></option>
+      <% } else { %>
+      <option value='<%= el._id %>,<%= el.level %>,<%= el.name %>'><%= el.name %></option>
+      <% }
+      }) %>
+    </select>
+
+    </section>
+    
+  </form>
+  </div>
+
+  <script type="text/javascript">
+  $(document).ready(function() {
+    $("#create-newcat").click(function() {
+      $("#category").css("display", "none");
+      $("#newcat").css("display", "");
+      $("select[name='category']").attr("disabled", "disabled");
+      $("input[name='category']").attr("disabled", "disabled");
+    });
+    $("#cancel-newcat").click(function() {
+      $("#newcat").css("display", "none");
+      $("#category").css("display", "");
+      $("select[name='category']").prop("disabled", false);
+      $("input[name='category']").prop("disabled", false);
+    });
+  
+    if ($("#appointed_time").is(":checked")) {
+      $("#appointment").css("display", "");
+    }
+    $("#appointed_time").on("click", function() {
+      var disp = $("#appointment").css("display")==="none" ? "" : "none";
+      $("#appointment").css("display", disp);
+    });
+  
+    $("#post-form").submit(function(event) {
+      if ($("#appointed_time").is(":checked")) {
+        var pass = validateDate();
+        if (!pass) {
+          $("#wrong-date").html("<font color='red'>日期不對或已過期，請在修改後重新發佈</font>");
+          return false;
+        }
+      }
+      if (/^\s*$/.test($("#title").val())) {
+        $("#result").html("<font color='red'>文章標題不可以留空</font>");
+        return false;
+      }
+      if (/^\s*$/.test($("#content").val())) {
+        $("#result").html("<font color='red'>文章內容不可以留空</font>");
+        return false;
+      }
+    });
+
+    // $("#save-draft")
+
+    function validateDate() {
+      var n = new Date();
+      var year = /^\d{4}$/.test($("#year").val()) ? +$("#year").val() : false;
+      var month = +$("select[name='month'] option:selected").val();
+      var day = /^\d{1,2}$/.test($("#day").val()) ? +$("#day").val() : false;
+      var hour = /^\d{1,2}$/.test($("#hour").val()) ? +$("#hour").val() : false;
+      var minute = /^\d{1,2}$/.test($("#minute").val()) ? +$("#minute").val() : false;
+      var second = /^\d{1,2}$/.test($("#second").val()) ? +$("#second").val() : false;
+      if (year === false || day === false || hour === false ||
+          minute === false || second === false) { return false; }
+      var date = new Date(year, month, day, hour, minute, second);
+      if (date.getTime() < n.getTime()) { return false; }
+      return date.getFullYear() === year &&
+        date.getMonth() === month &&
+        date.getDate() === day &&
+        date.getHours() === hour &&
+        date.getMinutes() === minute &&
+        date.getSeconds() === second;
+    }
+  });
+  </script>
+
+<%- include partial/cpFoot %>

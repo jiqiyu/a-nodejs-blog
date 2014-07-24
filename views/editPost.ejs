@@ -1,0 +1,144 @@
+<%- include partial/cpHead %>
+
+  <div class="wrapper cp-wrapper">
+  <div class="edit-prompt">編輯文章 | <a href="/post/<%= pid %>">查看</a></div>
+  <div id="result" class="result-wrap">
+    <% if (referrer === '') { %>
+    <span class="last-edit"><%= last_edit %></span>
+    <% } else if (referrer === 'newpost') { %>
+    <span style="color: green;">發佈成功，可繼續編輯</span>
+    <% } %>
+  </div>
+  <div style="clear: both;"></div>
+  <form method="post" action="/control-panel/post/edit/<%= pid %>" id="post-form" class="post-form">
+    <section class="post-main">
+    <input type="text" name="title" id="title" value="<%= ptitle %>" tabindex="10" autocomplete="off" class="inputarea"><br>
+    <textarea id="content" name="content" id="content" rows="24" class="inputarea"><%- content %></textarea>
+    </section>
+
+    <section class="post-submit">
+
+    <p class="submit">
+	  <input type="submit" name="submitpost" id="submit-post" value="發佈" tabindex="100" class="bright-button-blue">
+      <br><br><span class="small-title">—— 或者 ——</span><br><br>
+      <input type="button" name="save-draft" id="save-draft" class="button-primary" value="保存草稿 (todo)" tabindex="100" />&nbsp;&nbsp;<span class="small-title" style="margin:0; font-style: normal;">或</span>&nbsp;&nbsp;
+      <a href="/control-panel/post" style="color: blue;">取消，回文章列表頁</a>
+    </p>
+    <span class="small-title">—— 發佈選項 ——</span><br><br>
+    <input name="commentoff" type="checkbox" id="commentoff" class="css-checkbox lrg" <%= commentoff %> >
+    <label for="commentoff" class="css-label lrg web-two-style">關閉評論</label>
+    
+    <input name="ontop" type="checkbox" id="ontop" class="css-checkbox lrg" <%= ontop %> >
+    <label for="ontop" class="css-label lrg web-two-style">置頂</label>
+    
+    <input name="isprivate" type="checkbox" id="isprivate" class="css-checkbox lrg" <%= isprivate %> >
+    <label for="isprivate" class="css-label lrg web-two-style">僅自己可見</label><br>
+    
+    <% if (!draft) { %>
+    
+    <input name="appointed_time" id="appointed_time" type="checkbox" class="css-checkbox lrg" style="cursor: default;" checked disabled>
+    <label for="appointed_time" class="css-label lrg web-two-style" style="background-color: #efefef; cursor: default;">文章發佈於</label><br>
+    
+    <span class="appointment" style="background-color: #efefef;">
+      <select name="month" title="月" disabled>
+        <option value="<%= month %>" selected><%= month + 1 %></option>
+      </select> /
+      <input type="text" name="day" id="day" value="<%= day %>" size="2" maxlength="2" title="日" disabled>,&nbsp;
+      <input type="text" name="year" id="year" value="<%= year %>" size="4" maxlength="4" title="年" disabled>&nbsp;@&nbsp;
+      <input type="text" name="hour" id="hour" value="<%= hour %>" size="2" maxlength="2" title="時(0-23)" disabled>&nbsp;:&nbsp;
+      <input type="text" name="minute" id="minute" value="<%= minute %>" size="2" maxlength="2" title="分(0-59)" disabled>&nbsp;:&nbsp;
+      <input type="text" name="second" id="second" value="<%= second %>" size="2" maxlength="2" title="秒(0-59)" disabled>
+    </span>
+
+    <% } else { %>
+
+    <input name="appointed_time" id="appointed_time" type="checkbox" class="css-checkbox lrg" style="" <% if (appointed_time) { %>checked<% } %> >
+    <label for="appointed_time" class="css-label lrg web-two-style" style="">在預約的時間發佈</label><br>
+    
+    <span id="appointment" class="appointment" style="display: none;">
+      <select name="month" id="month" title="月">
+        <% var d = appointed_time ? new Date(appointed_time) : new Date();
+           var mon = d.getMonth();
+           for (var i=0; i<12; i++) {
+             if (i === mon) { %>
+        <option value="<%= i %>" selected><%= i + 1 %></option>
+        <%   } else { %>
+        <option value="<%= i %>"><%= i + 1 %></option>
+        <%   }
+           } %>
+      </select> /
+      <input type="text" name="day" id="day" value="<%= d.getDate() %>" size="2" maxlength="2" autocomplete="off" title="日">,&nbsp;
+      <input type="text" name="year" id="year" value="<%= d.getFullYear() %>" size="4" maxlength="4" autocomplete="off" title="年">&nbsp;@&nbsp;
+      <input type="text" name="hour" id="hour" value="<%= d.getHours() %>" size="2" maxlength="2" autocomplete="off" title="時(0-23)">&nbsp;:&nbsp;
+      <input type="text" name="minute" id="minute" value="<%= d.getMinutes() %>" size="2" maxlength="2" autocomplete="off" title="分(0-59)">&nbsp;:&nbsp;
+      <input type="text" name="second" id="second" value="<%= d.getSeconds() %>" size="2" maxlength="2" autocomplete="off" title="秒(0-59)">
+    </span>
+    <% } %>
+
+    <div id="wrong-date"></div>
+    
+    <br><span class="small-title">—— 標籤 ——</span><br><br>
+    <input type="text" name="tag" id="post-tag" value="<%= tag==='沒有標籤' ? '' : tag %>" size="22" tabindex="10" class="">&nbsp;&nbsp;<a style="cursor: pointer; color: blue;">從常用標籤裡選</a><br>
+    <div id="frequently_tagged_tags"><div>
+
+    <br><span class="small-title">—— 選擇一個分類 ——</span><br>
+    <% if (cat == "分類加載失敗了，刷新試下") { %>
+    <div><%= cat %></div>
+    <% } else if (cat == "尚無分類") { %>
+    <label><input type="checkbox" name="category" value="未分類" checked="checked" disabled="disabled">未分類<br></label>
+    <% } else { %>
+    <div id="newcat" style="display:none; background-color: #FFFF66; margin-top: 5px; padding: 7px; border-radius: 5px;">
+      <label>新分類名：<input type="text" name="newcatname" size="20" placeholder="必填"></label><br>
+      <label>父分類：
+        <select name="parentid">
+          <option value="nil" selected="selected">無</option>
+          <% if (cat.unfold.length) {
+               cat.unfold.forEach(function(el) { %>
+          <option value="<%= el._id %>,<%= el.depth %>"><%= el.space %><%= el.name %></option>
+          <%   });
+             } %>
+        </select>
+      </label><br><br>
+      <a id="cancel-newcat" style="color: blue; cursor: pointer;">取消，回已有分類裏選</a>
+    </div><br>
+    <div id="category">
+      <select name="category">
+      <% if (cat.unfold.length) {
+           cat.unfold.forEach(function(el) { %>
+        <option value="<%= el._id %>"
+          <% if (el._id.toString() === catid.toString()) { %>
+               selected
+          <% } %>
+        >
+          <%= el.space %><%= el.name %>
+        </option>
+    <%
+           });
+         }
+       } %>
+      </select>
+      <% if (level >= ul.editor) { %>
+      <a id="create-newcat" style="cursor: pointer; color: blue;">+新建一個分類</a>
+      <% } %>
+    </div>
+    <br><span class="small-title">—— 作者 ——</span><br><br>
+    <select name="author" id="post-author"
+      <% // if (authorList.length == 1) { %> disabled <% // } %>
+    >
+    <% authorList.forEach(function(el, index) {
+         if (el._id.toString() === authorid.toString()) { %>
+      <option selected='selected' value='<%= el._id %>,<%= el.level %>,<%= el.name %>'>作者 <%= el.name %></option>
+      <% } else { %>
+      <option value='<%= el._id %>,<%= el.level %>,<%= el.name %>'><%= el.name %></option>
+      <% }
+    }) %>
+    </select>
+
+    </section>
+    
+  </form>
+  </div>
+
+  <script src="/javascripts/editPost.js"></script>
+
+<%- include partial/cpFoot %>

@@ -1,0 +1,170 @@
+<%- include partial/cpHead %>
+
+<div class="wrapper cp-wrapper">
+    
+<% if (level < ul.editor) { %> <font color="#aaaaaa" size="6">編輯或以上權限的用戶方可管理分類</font> <% } else { %>
+   
+  <div class="cat-form">
+  <div id="blinking-border" style="position: absolute; height: 428px; width: 420px; left: 180px; top: 159px; border: 7px solid #FF6633; display: none;"></div>
+  <section class="edit-cat">
+    <h2 id="form-title">分類目錄</h2><div id="result" class="prompt" style="display: none;"></div>
+    <% if (error) { %>
+    <div class="prompt error" id="prompt"><%= error %></div>
+    <% } %>
+    <% if (success) { %>
+    <div class="prompt success" id="prompt"><%= success %></div>
+    <% } %>
+    <form id="addcat" method="post" action="/control-panel/category/new">
+      <div>
+	    <label for="catname">Name</label>
+	    <input name="catname" id="catname" type="text" value="" size="40" aria-required="true">
+	    <p>The name is how it appears on your site.</p>
+      </div>
+      <div class="form-field">
+	    <label for="parent">Parent</label>
+        <% if (cat == "分類加載失敗了，刷新頁面試下") { %>
+        <div><%= cat %></div>
+        <% } else if (cat === "尚無分類") { %>
+        <select name="parent" id="parent">
+	      <option value="nil" selected="selected" disabled="disabled">無</option>
+        </select>
+        <% } else { %>
+	    <select name="parent" id="parent">
+	      <option value="nil" selected>無</option>
+	      <%  if (cat.length) {
+                cat.forEach(function(el) { %>
+          <option value="<%= el._id %>, <%= el.depth %>"><%= el.space %><%= el.name %></option>
+          <%    });
+              }
+           } %>
+        </select>
+		<p>分类目录，和标签不同，它可以有层级关系。你可以有一个音乐的分类目录，在这个目录下面你可以创建流行或者古典的子目录。完全自由。</p>
+	  </div>
+      <div>
+	    <label for="cat-description">Description</label><br>
+	    <textarea name="description" id="cat-description" rows="5" cols="40"></textarea>
+	    <p>The description is not prominent by default; however, some themes may show it.</p>
+      </div>
+
+      <p class="submit">
+        <input type="submit" name="submit-newcat" id="submit-newcat" value="新增分類目錄"> —— 或 ——
+        <input type="button" name="submit-edit" id="submit-edit" value="提交編輯">
+        <span id="cancel-edit" style="cursor: pointer;"><u>[重置表格]</u></span>
+      </p>
+    </form>
+  </section>
+
+  <% if (cat === "分類加載失敗了，刷新試下" ||
+         cat === "尚無分類") { %>
+  <div><%= cat %></div>
+  <% } else { %>  
+  <section class="cat-table">
+    <form action="" id="multi-op-form">
+
+      <% if (deletionErr) { %>
+      <div class="prompt error" id="prompt"><%= deletionErr %></div>
+      <% } %>
+      <% if (deleted) { %>
+      <div class="prompt success" id="prompt"><%= deleted %></div>
+      <% } %>
+      
+      <div class="multi-op-top">
+        <select>
+          <option value="" selected="selected">批量动作</option>
+          <option value="delete">删除</option>
+        </select>
+        <input type="submit" value="應用 (todo)" id="multi-op-top-btn">
+      </div>
+      <table cellspacing="0">
+	    <thead>
+	      <tr>
+	        <th scope="col"><input type="checkbox" id="cb"></th>
+	        <th scope="col">名称</th>
+	        <th scope="col">描述</th>
+	        <th scope="col">文章</th>
+	      </tr>
+	    </thead>
+
+	    <tfoot>
+	      <tr>
+	        <th scope="col"><input type="checkbox" id="cb-bot"></th>
+	        <th scope="col" style="min-width: 123px;">名称</th>
+	        <th scope="col">描述</th>
+	        <th scope="col">文章</th>
+	      </tr>
+	    </tfoot>
+        <tbody>
+          <% if (catN.length) {
+               catN.forEach(function(el) { %>
+          <tr id="cat-<%= el._id %>"
+              onmouseover="javascript:$('#op-<%= el._id %>').css('display', 'block');"
+              onmouseout="javascript:$('#op-<%= el._id %>').css('display', 'none');"
+              style="height: 4.1em;">
+            <th scope="row">
+              <% if (!el.isdefault) { %>
+              <input type="checkbox" name="<%= el._id %>" value="<%= el.name %>">
+              <% } else { %>
+              <font color=gray>默認<br>分類</font>
+              <% } %>
+            </th>
+            <td <% if (el.isdefault) { %>style="padding-top: 13px;"<% } %> >
+              <strong>
+                <%= el.space.length ? new Array(el.space.length/6/4 + 1).join('&mdash;&nbsp;') : '' %>
+                <a href="javascript:loadEditForm('<%= el.name %>', <%= el.depth %>, '<%= el.parent %>', '<%= el.description %>', '<%= el._id %>', '<%= el.subcat ? el.subcat.id : undefined %>');"
+                   title="編輯<%= el.name %>"
+                   id="a-<%= el._id %>">
+                  <%= el.name %>
+                </a>
+              </strong><br>
+              <div id="op-<%= el._id %>" style="display: none; padding-top: 4px;">
+                <span><a href="javascript:loadEditForm('<%= el.name %>', '<%= el.depth %>', '<%= el.parent %>', '<%= el.description %>', '<%= el._id %>', '<%= el.subcat ? el.subcat.id : undefined %>');" id="span-a-<%= el._id %>">编辑 </a></span>
+                <!-- <span><a href="#">快速编辑</a> | </span> -->
+                <% if (!el.isdefault) { %>
+                |
+                <%   if (el.haschildren) { %>
+                <span><a href="/control-panel/category/delete/<%= el.name %>?id=<%= el._id %>&subcat=<%= el.subcat.id.join(',') %>" onclick="javascript:return confirm('確實要刪除？');"> 删除</a></span>
+                <%   } else { %>
+                <span><a href="/control-panel/category/delete/<%= el.name %>?id=<%= el._id %>" onclick="javascript:return confirm('確實要刪除？');"> 删除</a></span>
+                <%   }
+                   } %>
+              </div>
+            </td>
+            <td id="desc-<%= el._id %>"><%= el.description || '無' %></td>
+            <td><a href="/category/<%= el.name %>?id=<%= el._id %>" target="_blank"><%= el.nselfpost %></a></td>
+          </tr>
+        <%   });
+           } else { %>
+           暫無
+        <% } %>
+        </tbody>
+      </table>
+      <div class="multi-op-bot">
+        <select>
+          <option value="" selected="selected">批量动作</option>
+          <option value="delete">删除</option>
+        </select>
+        <input type="submit" value="應用 (todo)" id="multi-op-bot-btn">
+      </div>
+      <div class="cat-table-page">
+      <% if (pages > 1) { %>頁碼：<%
+           for (var i=1; i<=pages; i++) {
+             if (i === pageNum) { %>
+        [<%= i %>]
+      <%     } else { %>
+        <a href="/control-panel/category?p=<%= i %>"> <%= i %> </a>
+      <%     }
+           }
+         } %>
+      </div>
+    </form>
+  </section>
+  <% } %>
+  </div>
+
+<% } %>
+
+</div>
+
+<script src="/javascripts/category.js"></script>
+
+<%- include partial/cpFoot %>

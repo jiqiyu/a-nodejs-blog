@@ -1,0 +1,43 @@
+<%- include partial/cpHead %>
+
+  <div class="wrapper cp-wrapper">
+    <section id="col1" class="col">
+      <div class="site-stat">
+        <h2 class="block-title">網站內容</h2>
+        <p class="stat">共
+          <a href="/control-panel/post" class="big"><%= postStat.total %></a>篇文章，
+          <a class="big"><%= postStat.draft %></a>篇草稿，
+          <a href="/control-panel/category" class="big"><%= ncat %></a>個分類，
+          <a href="/control-panel/tag" class="big"><%= (typeof tag === 'string') ? (tag === '暫無' ? 0 : tag) : tag.length %></a>個標籤
+        </p>
+      </div>
+      <div class="site-stat">
+        <%- include partial/tagcloud %>
+      </div>
+    </section>
+    
+    <section id="col2" class="col">
+      <div class="site-stat">
+        <h2 class="block-title">草稿 (todo)</h2>
+        <p class="stat">暫無</p>
+      </div>
+      <div class="site-stat">
+        <h2 class="block-title">近期評論 (todo)</h2>
+        <p class="stat">暫無</p>
+      </div>
+    </section>
+    
+    <section id="col3" class="col">
+      <div class="site-stat">
+        <h2 class="block-title">用戶</h2>
+        <p class="stat">
+          <a class="big"><%= userStat.nAu %></a>個作者，
+          <a class="big"><%= userStat.nEd %></a>個編輯，
+          <a class="big"><%= userStat.nSu %></a>個超級用戶
+        </p>
+      </div>
+    </section>
+    
+  </div>
+  
+<%- include partial/cpFoot %>
