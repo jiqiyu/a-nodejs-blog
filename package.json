@@ -1,7 +1,16 @@
 {
   "name": "A-nodejs-blog",
   "version": "0.0.1",
-  "private": true,
+  "keywords": [
+      "blog",
+      "cms"
+  ],
+  "licenses": [
+      {
+          "type": "MIT",
+          "url": "https://raw.githubusercontent.com/jiqiyu/a-nodejs-blog/master/LICENSE"
+      }
+  ],
   "scripts": {
     "start": "node app.js"
   },
