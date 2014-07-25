@@ -104,8 +104,16 @@ $(function() {
             } else {
                 var tdrole = '#td-role-' + gEditUser.username;
                 var tdintro = '#td-intro-' + gEditUser.username;
+                var aid = '#a-' + gEditUser.username;
+                var ahref = 'javascript:loadEditForm(\'' +
+                    gEditUser.username + '\', \'' +
+                    (update.level !== undefined ? update.level : gEditUser.level) +
+                    '\', \'' + gEditUser.email + '\', \'' +
+                    (update.intro !== undefined ? update.intro : gEditUser.intro) +
+                    '\');';
+                $(aid).attr('href', ahref);
                 if (update.intro !== undefined) {
-                    $(tdintro).text(update.intro);
+                    $(tdintro).text(update.intro || '暫無');
                     gEditUser.intro = update.intro;
                     
                 }

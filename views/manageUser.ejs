@@ -100,7 +100,7 @@
           <td style="padding-top: .8em;">
             <strong><%= user.name %></strong><br>
             <div id="op-<%= user._id %>" style="display: none; padding-top: 5px;">
-              <span><a href="javascript:loadEditForm('<%= user.name %>', '<%= user.level %>', '<%= user.email %>', '<%= user.intro %>');" title="更改用戶的角色或簡介" alt="更改用戶的角色或簡介" id="a-<%= user._id %>">編輯</a> </span>
+              <span><a href="javascript:loadEditForm('<%= user.name %>', '<%= user.level %>', '<%= user.email %>', '<%= user.intro %>');" title="更改用戶的角色或簡介" alt="更改用戶的角色或簡介" id="a-<%= user.name %>">編輯</a> </span>
               <% if (user.level !== ul.su) { %> | <span><a href="/control-panel/user/del/<%= user._id %>" onclick="javascript:return confirm('確實要刪除？');">刪除此用戶</a></span> <% } %>
             </div>
           </td>
