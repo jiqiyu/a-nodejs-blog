@@ -184,9 +184,10 @@ $(function() {
                 $("#result").html("<font color='red'>錯誤：編輯或以上權限的用戶才可以新建分類</font>");
             } else {
                 former = current;
-                if (data.catid) {
-                    former.category = data.catid;
-                }
+                former.category = $("select[name='category'] option:selected").val();
+                //if (data.catid) {
+                //    former.category = data.catid;
+                //}
                 $("#result").empty();
                 $("#result").html("<font color='green'>" +data.result+ "</font>");
                 setTimeout(function() {

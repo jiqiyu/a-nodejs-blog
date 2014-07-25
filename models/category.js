@@ -277,14 +277,14 @@ Category.catNew = function catNew(cat, parentidArr, callback) {
                             cat,
                             {safe: true},
                             function(err, doc) {
-                                var newcatid = doc[0]._id;
+                                // var newcatid = doc[0]._id;
                                 collection.update(
                                     {_id: {$in: parentidArr}},
                                     {$set: {haschildren: true}},
                                     {w: 0, multi: true}
                                 );
                                 db.close();
-                                callback(err, newcatid);
+                                callback(err, doc);
                             });
                     } else {
                         docs.forEach(function(el, idx) {
@@ -328,7 +328,7 @@ Category.catNew = function catNew(cat, parentidArr, callback) {
                                             {w: 0, multi: true}
                                         );
                                         db.close();
-                                        callback(err, doc[0]._id); /////////////////////////////doc[N]._id
+                                        callback(err, doc);
                                     });
                             }
                         });
