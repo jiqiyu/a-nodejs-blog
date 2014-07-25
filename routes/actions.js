@@ -969,7 +969,10 @@ exports.editPostCat = function(req, res, next) {
                 if (err) {
                     console.log('!error! action.js line #735');
                 }
-                req.jiqiyu.newcatid = doc;
+                req.jiqiyu.newCatIdArr = [];
+                doc.forEach(function(el) {
+                    req.jiqiyu.newCatIdArr.push(el._id);
+                });
                 Category.delPid(
                     [{
                         id: [ObjectId(req.body.former.category)],
@@ -1087,8 +1090,8 @@ exports.submitEdits = function(req, res) {
     if (req.body.category && !req.body.newcatname) {
         article.catid = [ObjectId(req.body.category)];
     }
-    if (req.jiqiyu.newcatid) {
-        article.catid = [req.jiqiyu.newcatid];
+    if (req.jiqiyu.newCatIdArr && req.jiqiyu.newCatIdArr.length > 0) {
+        article.catid = req.jiqiyu.newCatIdArr;
     }
     if (req.body.title) {
         article.title = req.body.title;
@@ -1185,7 +1188,7 @@ exports.submitEdits = function(req, res) {
         res.send({
             result: resp,
             last_edit: article.last_edit,
-            catid: req.jiqiyu.newcatid
+            catIdArr: req.jiqiyu.newCatIdArr
         });
     });
 
