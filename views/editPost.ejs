@@ -94,7 +94,7 @@
           <option value="nil" selected="selected">無</option>
           <% if (cat.unfold.length) {
                cat.unfold.forEach(function(el) { %>
-          <option value="<%= el._id %>,<%= el.depth %>"><%= el.space %><%= el.name %></option>
+          <option value="<%= el._id %>,<%= el.depth %>"><%- el.space %><%= el.name %></option>
           <%   });
              } %>
         </select>
@@ -110,7 +110,7 @@
                selected
           <% } %>
         >
-          <%= el.space %><%= el.name %>
+          <%- el.space %><%= el.name %>
         </option>
     <%
            });
