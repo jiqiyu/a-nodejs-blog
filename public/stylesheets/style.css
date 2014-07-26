@@ -183,6 +183,7 @@ aside a:hover {padding: 0 4px;}
     word-wrap: break-word;
     margin-bottom: 30px;
 }
+.post-content h1, .post-content h2, .post-content h3,
 .inside h1, .inside h2, .inside h3 {
     margin: .7em 0 .7em 0;
     font-weight: bold;
