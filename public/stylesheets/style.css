@@ -183,6 +183,10 @@ aside a:hover {padding: 0 4px;}
     word-wrap: break-word;
     margin-bottom: 30px;
 }
+.inside h1, .inside h2, .inside h3 {
+    margin: .7em 0 .7em 0;
+    font-weight: bold;
+}
 .post-content a, .inside a {
     color: #4183C4;
 }
