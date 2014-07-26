@@ -33,7 +33,7 @@
 	      <option value="nil" selected>無</option>
 	      <%  if (cat.length) {
                 cat.forEach(function(el) { %>
-          <option value="<%= el._id %>, <%= el.depth %>"><%= el.space %><%= el.name %></option>
+          <option value="<%= el._id %>, <%= el.depth %>"><%- el.space %><%= el.name %></option>
           <%    });
               }
            } %>
@@ -109,7 +109,7 @@
             </th>
             <td <% if (el.isdefault) { %>style="padding-top: 13px;"<% } %> >
               <strong>
-                <%= el.space.length ? new Array(el.space.length/6/4 + 1).join('&mdash;&nbsp;') : '' %>
+                <%- el.space.length ? new Array(el.space.length/6/4 + 1).join('&mdash;&nbsp;') : '' %>
                 <a href="javascript:loadEditForm('<%= el.name %>', <%= el.depth %>, '<%= el.parent %>', '<%= el.description %>', '<%= el._id %>', '<%= el.subcat ? el.subcat.id : undefined %>');"
                    title="編輯<%= el.name %>"
                    id="a-<%= el._id %>">
