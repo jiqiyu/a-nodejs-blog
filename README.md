@@ -6,18 +6,18 @@ Username: demo(super user) Password: demo
 # How to Install
 
 * Requirements
-  * Node.js
+  * Node.js  
     http://nodejs.org/
-  * Mongodb-org
+  * Mongodb-org  
     To install mongo, the best way is always to follow
     the official guide: http://docs.mongodb.org/manual/tutorial/,
     install mongodb-org rather than other editions.
   
 * Install  
-  0. make sure the mongod daemon has started  
-  1. cd to [a directory you put the code files (eg. /var/www/html/a-nodejs-blog)]  
-  2. git clone https://github.com/jiqiyu/a-nodejs-blog.git  
-  3. npm install  
+  0. make sure the mongod daemon has started
+  1. cd to [a directory you put the code files (eg. /var/www/html/a-nodejs-blog)]
+  2. git clone https://github.com/jiqiyu/a-nodejs-blog.git
+  3. npm install
   4. node app.js
 
 # Open For the First Time
