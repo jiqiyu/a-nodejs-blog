@@ -1,6 +1,6 @@
 # A Node.js Blog
 
-Demo site: [mingri.org:3000](mingri.org:3000)  
+Demo site: [mingri.org:3000](http://mingri.org:3000)  
 Username: demo(super user) Password: demo  
 
 # How to Install
@@ -18,6 +18,7 @@ Username: demo(super user) Password: demo
   1. cd to [a directory you put the code files (eg. /var/www/html/a-nodejs-blog)]  
   2. git clone https://github.com/jiqiyu/a-nodejs-blog.git  
   3. npm install  
+  4. node app.js
 
 # Open For the First Time
 
