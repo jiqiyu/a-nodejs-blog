@@ -4,7 +4,7 @@
 
 module.exports = {
 
-    cookieSecret: 'jiqiyu-nodejs-ejs',
+    cookieSecret: 'jiqiyu-node-mongo-ejs',
     
     db: { db: 'jqydb',
           host: 'localhost',
@@ -26,12 +26,6 @@ module.exports = {
           }
         },
     
-    userLevel: { su: 3,
-                 editor: 2,
-                 author: 1,
-                 reg: 0
-               },
-    
     limit: { ontop: 0,            /* 置頂文章數不多於ontop篇，
                                      設為0表示不限制篇數 */
              postsPerPage: 3,     /* 每一頁顯示文章數 */
@@ -42,15 +36,25 @@ module.exports = {
                                     每一頁顯示的文章數 */
            },
 
+    tagcloud: { postsMoreThan: 0  /* 標籤雲顯示文章數多於（不含等於）
+                                     postsMoreThan的標籤 */
+              },
+    
+
+    /*------Do not alter follows 不要修改下面的內容 -----------*/
+    userLevel: { su: 3,
+                 editor: 2,
+                 author: 1,
+                 reg: 0
+               },
+    
     postState: { trash: -1,
                  draft: 0,
                  post: 1,
                  ppost: 2,
                  ontop: 3
                },
-
-    tagcloud: { postsMoreThan: 0  /* 標籤雲顯示文章數多於（不含等於）
-                                     postsMoreThan的標籤 */
-              }
+    /*--------------------------------------*/
+    
     
 };
