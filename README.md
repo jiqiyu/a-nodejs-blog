@@ -22,7 +22,7 @@ Username: demo(super user) Password: demo
 
 # Open For the First Time
 
-First of all, visit http://[your-site-domain]/welcome to add
+First of all, visit **http://[your-site-domain]/welcome** to add
 a super user, then you can login to the control panel
 to publish your first blog post.
 
