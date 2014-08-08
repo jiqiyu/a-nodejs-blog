@@ -788,7 +788,7 @@ exports.catDelOne = function(req, res) {
     }
 
     if (!Fn.isObjectIdString(req.query.id)) {
-        return res.send('error #825,36');
+        return res.send('####error#### action.js #791,54');
     }
     var cat = [ObjectId(req.query.id)];
     var subcat = req.query.subcat ?
@@ -802,7 +802,7 @@ exports.catDelOne = function(req, res) {
         }
         if (pidObjArr.length) {
             Category.change(cat, defaultCat, pidObjArr, function(err, result) {
-                if (err) { console.log('################693'); }
+                if (err) { console.log('####error#### action.js #805,69'); }
                 req.flash('deleted', '分類已刪除');
                 return res.redirect('control-panel/category');
             });
@@ -1105,7 +1105,7 @@ exports.editPostCat = function(req, res, next) {
     if (state === pstate.draft) {
         next();
     }
-    if (Fn.isObjectIdString(req.body.category) && !req.body.newcatname) { console.log('11111');
+    if (Fn.isObjectIdString(req.body.category) && !req.body.newcatname) {
         Category.change(
             [req.jiqiyu.former.category],
             ObjectId(req.body.category),
@@ -1116,7 +1116,7 @@ exports.editPostCat = function(req, res, next) {
             }],
             function(err, result) {
                 if (err) {
-                    console.log('!error! action.js #710');
+                    console.log('####error#### action.js #1119,63');
                 }
                 next();
             });
@@ -1156,7 +1156,7 @@ exports.editPostCat = function(req, res, next) {
             [cat.parent],
             function(err, doc) {
                 if (err) {
-                    console.log('!error! action.js #1088');
+                    console.log('####error#### action.js #1159,63');
                     return res.send(err);
                 }
                 req.jiqiyu.newCatIdArr = [];
@@ -1171,12 +1171,12 @@ exports.editPostCat = function(req, res, next) {
                     }],
                     function(err) {
                         if (err) {
-                            console.log('!error! action.js #1103');
+                            console.log('####error#### action.js #1174,71');
                         }
                         next();
                     });
             });
-    } else if (state) { console.log('111113'); console.log(req.jiqiyu.former.category);
+    } else if (state) {
         Category.change(
             [req.jiqiyu.former.category],
             req.jiqiyu.former.category,
@@ -1187,7 +1187,7 @@ exports.editPostCat = function(req, res, next) {
             }],
             function(err, result) {
                 if (err) {
-                    console.log('!error! action.js #762');
+                    console.log('####error#### action.js #1190,63');
                 }
                 next();
             });
@@ -1261,13 +1261,12 @@ exports.tagRename = function(req, res) {
 exports.submitEdits = function(req, res) {
 
     var article = {};
-    console.log(req.body.pstate);
+
     if (Fn.isPostState(req.body.pstate)) {
         article.state = +req.body.pstate;
-        console.log('here####', article.state);
     }
     var state = article.state || +req.jiqiyu.former.pstate;
-    if (req.body.tag !== undefined && Fn.getReqStr(req.body.tag)) { console.log('1111100');
+    if (req.body.tag !== undefined && Fn.getReqStr(req.body.tag)) {
         article.tagid = req.jiqiyu.tagId;
         Tag.updatePostId(
             req.body.untag,
@@ -1276,7 +1275,7 @@ exports.submitEdits = function(req, res) {
             state,
             req.jiqiyu.former.pstate
         );
-    } else if (article.state) { console.log('1111122');
+    } else if (article.state) {
         if (Fn.getReqStr(req.body.former.tag)) {
             var tagArr = req.body.former.tag.split(',');
             Tag.updatePostId(tagArr, tagArr, req.jiqiyu.pid,

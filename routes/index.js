@@ -39,7 +39,7 @@ exports.checkAppointment = function(req, res, next) {
         if (pl && (fl === pl)) {
             Post.postNew(postsArr, function(err, docs) {
                 if (err) {
-                    console.log('#42,37');
+                    console.log('####error#### index.js #42,37');
                     next();
                 }
                 Post.delPostsById(formerIdsArr, null, function(err, tag,
@@ -57,21 +57,21 @@ exports.checkAppointment = function(req, res, next) {
                                 el.tagid, el._id, el.state,
                                 function(err) {
                                     if (err) {
-                                        console.log('!error! index.js #45');
+                                        console.log('####error#### index.js #60,75');
                                     }
                                 });
                             Post.catAddPid(
                                 el.catid, el._id, el.state,
                                 function(err) {
                                     if (err) {
-                                        console.log('!error! index.js #52');
+                                        console.log('####error#### index.js #67,80');
                                     }
                                 });
                             Post.userAddPid(
                                 el.authorid, el._id, el.state,
                                 function(err) {
                                     if (err) {
-                                        console.log('!error! index.js #59');
+                                        console.log('####error#### index.js #74,79');
                                     }
                                 });
                             // increase counter because of the Post.postnew action
@@ -92,7 +92,7 @@ exports.checkAppointment = function(req, res, next) {
                             if (++i === len) {
                                 Post.upsProperty(postProp, function(err) {
                                     if (err) {
-                                        console.log('!error! index.js #79');
+                                        console.log('####error#### index.js #95,80');
                                     }
                                 });
                             }
