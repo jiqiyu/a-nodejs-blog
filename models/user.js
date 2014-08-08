@@ -152,14 +152,14 @@ User.switchAuthor = function(unamePush, unamePull, pid, state, formerState) {
             var field = {ppostid: pid};
             break;
         default:
-            return console.log('heeeeeeeeeeere: ' + field + pstate.post);
+            return console.log('3heeeeeeeeeeere: ' + field + pstate.post);
         }
         db.collection('user').update(
             {name: unamePush},
             {$push: field},
             {multi: true, w: 0},
             function(err, result) {
-                if (err) { console.log('!error! user.js line #93'); }
+                if (err) { console.log('!error! user.js #93'); }
                 switch (+formerState) {
                 case pstate.draft:
                     field = {draftid: pid};
@@ -173,7 +173,7 @@ User.switchAuthor = function(unamePush, unamePull, pid, state, formerState) {
                     field = {ppostid: pid};
                     break;
                 default:
-                    return console.log('heeeeeeeeeeere: ' + field + pstate.post);
+                    return console.log('4heeeeeeeeeeere: ' + field + pstate.post);
                 }
                 db.collection('user').update(
                     {name: unamePull},
@@ -181,7 +181,7 @@ User.switchAuthor = function(unamePush, unamePull, pid, state, formerState) {
                     {multi: true, w: 0},
                     function(err, result) {
                         db.close();
-                        if (err) { return console.log('!error! user.js line #115'); }
+                        if (err) { return console.log('!error! user.js #115'); }
                     });
             });
     });

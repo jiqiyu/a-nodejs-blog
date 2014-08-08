@@ -400,48 +400,64 @@ Category.change = function(fromCatIdArr, toCatId, pidObjArr, callback) {
         var ppid = [];
         var fpid = [];
         var fppid = [];
+        var token = 0; // in case of fromCatIdArr contains toCatId
         pidObjArr.forEach(function(el) {
             switch (+el.state) {
             case pstate.post:
             case pstate.ontop:
+                token = 0;
                 pid.push(el.pid);
                 break;
             case pstate.ppost + pstate.ontop:
             case pstate.ppost:
+                token = 1;
                 ppid.push(el.pid);
                 break;
             default:
-                return console.log('heeeeeeeeeeere: ' + field + pstate.post);
+                return console.log('1heeeeeeeeeeere: ' + field + pstate.post);
             }
             switch (+el.formerState) {
             case pstate.post:
             case pstate.ontop:
-                fpid.push(el.pid);
+                if (fromCatIdArr[count].toString() !== toCatId.toString()) { 
+                    fpid.push(el.pid);
+                } else if (token === 1) {
+                    fpid.push(el.pid);
+                } else {
+                    pid.pop();
+                }
                 break;
             case pstate.ppost + pstate.ontop:
             case pstate.ppost:
-                fppid.push(el.pid);
+                if (fromCatIdArr[count].toString() !== toCatId.toString()) { 
+                    fppid.push(el.pid);
+                } else if (token === 0) {
+                    fppid.push(el.pid);
+                } else {
+                    ppid.pop();
+                }
                 break;
             }
             if (++count === len) {
+                console.log(pid, fpid);
                 db.collection('category').update(
                     {'_id': toCatId},
                     {$push: {'postid': {$each: pid}}},
                     {multi: true, w: 0},
                     function(err, result) {
-                        if (err) { console.log('!error! category.js line #419'); }
+                        if (err) { console.log('!error! category.js #419'); }
                         db.collection('category').update(
                             {'_id': toCatId},
                             {$push: {'ppostid': {$each: ppid}}},
                             {multi: true, w: 0},
                             function(err, result) {
-                                if (err) { console.log('!error! category.js line #425'); }
+                                if (err) { console.log('!error! category.js #425'); }
                                 db.collection('category').update(
                                     {'_id': {$in: fromCatIdArr}},
                                     {$pullAll: {'postid': fpid}},
                                     {multi: true, w: 0},
                                     function(err, result) {
-                                        if (err) { console.log('!error! category.js line #431'); }
+                                        if (err) { console.log('!error! category.js #431'); }
                                         db.collection('category').update(
                                             {'_id': {$in: fromCatIdArr}},
                                             {$pullAll: {'ppostid': fppid}},

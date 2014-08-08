@@ -21,8 +21,10 @@ $(function() {
         former.pstate = 0;
         break;
     case former.ontop === true:
-    case (former.ontop && former.isprivate) === true:
         former.pstate = 3;
+        break;
+    case (former.ontop && former.isprivate) === true:
+        former.pstate = 5;
         break;
     case former.isprivate === true:
         former.pstate = 2;
@@ -73,11 +75,13 @@ $(function() {
             current.at = false;
         }
         switch (true) {
+        case current.ontop && current.isprivate:
+            current.pstate = 5;
+            break;
         case current.draft === true:  
             current.pstate = 0;
             break;
         case current.ontop === true:
-        case (current.ontop && current.isprivate) === true:
             current.pstate = 3;
             break;
         case current.isprivate === true:
@@ -100,8 +104,8 @@ $(function() {
         }
         if ($("#newcat").css("display") === "block") {
             var newcat = $.trim($("input[name=newcatname]").val());
-            if (newcat === "") {
-                $("#result").html("<font color='red'>新分類名沒有填</font>");
+            if (newcat === "" || newcat.length > 20) {
+                $("#result").html("<font color='red'>新分類名爲空或過長</font>");
                 return false;
             } else {
                 update.newcatname = newcat;
@@ -160,7 +164,7 @@ $(function() {
             return false;
         } else {
             update.former = former;
-            update.last_edit = new Date().toLocaleString();
+            update.last_edit = new Date().getTime();
         }
         if (/^\s*$/.test(current.title)) {
             $("#result").html("<font color='red'>文章標題不可以留空</font>");
@@ -170,7 +174,6 @@ $(function() {
             $("#result").html("<font color='red'>文章內容不可以留空</font>");
             return false;
         }
-        
         event.preventDefault();
         var $form = $(this);
         var url = $form.attr("action");
@@ -179,9 +182,9 @@ $(function() {
             if (data === '出錯了') {
                 $("#result").empty();
                 $("#result").html("<font color='red'>出錯了，請重試</font>");
-            } else if (data === 'new cat error') {
+            } else if (!data.result) {
                 $("#result").empty();
-                $("#result").html("<font color='red'>錯誤：編輯或以上權限的用戶才可以新建分類</font>");
+                $("#result").html("<font color='red'>" +data+ "</font>");
             } else {
                 former = current;
                 if (data.catIdArr) {

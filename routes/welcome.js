@@ -19,13 +19,26 @@ exports.superuser = function(req, res) {
 
 };
 
+// todo: data validation
 exports.addsu = function(req, res) {
 
-    var name = req.body.suname;
-    var psw1 = require('crypto')
-                 .createHash('md5')
-                   .update(req.body.psw1)
-                     .digest('hex');
+    var name = req.body.suname.replace(/^\s+|\s+$/g, '');
+    var psw1 = req.body.psw1;
+    var psw2 = req.body.psw2;
+
+    if (!name.length || name.length > 20) {
+        return res.send('用戶名爲空或過長，<a href="javascript:history.back();">返回</a>');
+    }
+    if (psw1 !== psw2) {
+        return res.send('兩次密碼輸入得不一樣，<a href="javascript:history.back();">返回</a>');
+    }
+    if (psw1.length < 6) {
+        return res.send('密碼不應少於六位，<a href="javascript:history.back();">返回</a>');
+    }
+    psw1 = require('crypto')
+             .createHash('md5')
+               .update(psw1)
+                 .digest('hex');
 
     var user = {'name': name, 'password': psw1, 'level': 3};
     User.add(user, function(err, doc) {

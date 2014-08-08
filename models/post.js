@@ -349,15 +349,9 @@ Post.getPostById = function(pid, callback) {
         if (err) {
             return callback(err);
         }
-        db.collection('post', function(err, coll) {
-            if (err) {
-                db.close();
-                return callback(err);
-            }
-            coll.findOne({_id: pid}, function(err, doc) {
-                db.close();
-                callback(err, doc);
-            });
+        db.collection('post').findOne({_id: pid}, function(err, doc) {
+            db.close();
+            callback(err, doc);
         });
     });
     
@@ -679,7 +673,7 @@ Post.upsProperty = function(postPropObj, callback) {
                                     postPropObj.postCounter}},
                             {w: 0}
                         );
-                    } else {
+                    } else if (postPropObj.postCounter >= 0) {
                         collection.update(
                             {_id: doc._id},
                             {$set: {'property.postCounter':
@@ -694,7 +688,7 @@ Post.upsProperty = function(postPropObj, callback) {
                                     postPropObj.ppostCounter}},
                             {w: 0}
                         );
-                    } else {
+                    } else if (postPropObj.ppostCounter >= 0) {
                         collection.update(
                             {_id: doc._id},
                             {$set: {'property.ppostCounter':
@@ -713,7 +707,7 @@ Post.upsProperty = function(postPropObj, callback) {
                                     postPropObj.topCounter}},
                             {w: 0}
                         );
-                    } else {
+                    } else if (postPropObj.topCounter >= 0) {
                         collection.update(
                             {_id: doc._id},
                             {$set: {'property.topCounter':
@@ -728,7 +722,7 @@ Post.upsProperty = function(postPropObj, callback) {
                                     postPropObj.draftCounter}},
                             {w: 0}
                         );
-                    } else {
+                    } else if (postPropObj.draftCounter >= 0) {
                         collection.update(
                             {_id: doc._id},
                             {$set: {'property.draftCounter':
@@ -739,10 +733,14 @@ Post.upsProperty = function(postPropObj, callback) {
                 } else {
                     collection.insert(
                         {property: {
-                            'topCounter': postPropObj.topCounter,
-                            'postCounter': postPropObj.postCounter,
-                            'ppostCounter': postPropObj.ppostCounter,
-                            'draftCounter': postPropObj.draftCounter
+                            'topCounter':
+                            (!postPropObj.topCounter || postPropObj.topCounter < 0) ? 0 : postPropObj.topCounter,
+                            'postCounter':
+                            (!postPropObj.postCounter || postPropObj.postCounter < 0) ? 0 : postPropObj.postCounter,
+                            'ppostCounter':
+                            (!postPropObj.ppostCounter || postPropObj.ppostCounter < 0) ? 0 : postPropObj.ppostCounter,
+                            'draftCounter':
+                            (!postPropObj.draftCounter || postPropObj.draftCounter < 0) ? 0 : postPropObj.draftCounter
                         }},
                         {w: 0}
                     );
@@ -923,14 +921,16 @@ Post.delPostsById = function(pidArr, userObj, callback) {
             var commentid = [];
             var count = 0, len = docs.length;
             docs.forEach(function(el) {
-                
-                switch (true) {
-                case userObj.level === ul.author &&
-                        userObj._id !== el.authorid.toString():
-                case userObj._id !== el.authorid.toString() &&
-                        el.level && userObj.level <= el.level:
-                    db.close();
-                    return callback('no privilege');
+
+                if (userObj) {
+                    switch (true) {
+                    case userObj.level === ul.author &&
+                            userObj._id !== el.authorid.toString():
+                    case userObj._id !== el.authorid.toString() &&
+                            el.level && userObj.level <= el.level:
+                        db.close();
+                        return callback('no privilege');
+                    }
                 }
                 
                 if (el.commentid && el.commentid.length) {

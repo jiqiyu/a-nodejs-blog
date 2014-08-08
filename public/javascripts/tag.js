@@ -45,6 +45,11 @@ $(function() {
             $res.show();
             return false;
         }
+        if (/,+/.test(newname) || newname.length > 20 ) {
+            $res.addClass('error').text('標籤名不可包含英文逗號，且長度應不超過20個字符');
+            $res.show();
+            return false;
+        }
 
         $.get(url, {'newname': newname}).done(function(err) {
             if (err) {

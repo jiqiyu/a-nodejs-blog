@@ -7,15 +7,15 @@ function loadEditForm(username, level, email, intro) {
     
     gEditUser.username = username;
     gEditUser.level = +level;
-    gEditUser.email = email;
+    gEditUser.email = (email === 'undefined' ||
+                       email === 'null' ||
+                       email === '') ? '' : email;
     gEditUser.intro = (intro === 'undefined' ||
                        intro === 'null' ||
                        intro === '') ? '' : intro;
     
-    $('#username').val(username);
-    $('#username').attr('disabled', true);
-    $('#email').val(email || '');
-    $('#email').attr('disabled', true);
+    $('#username').val(username).attr('disabled', true);
+    $('#email').val(gEditUser.email).attr('disabled', true);
     if (+level === 3) {
         $('#role').attr('disabled', true).hide();
         $('#superuser').show();
@@ -24,10 +24,8 @@ function loadEditForm(username, level, email, intro) {
         $('#role').attr('disabled', false).val(level).show();
     }
     $('#intro').val(gEditUser.intro);
-    $('#pass1').val('************');
-    $('#pass1').attr('disabled', true);
-    $('#pass2').val('************');
-    $('#pass2').attr('disabled', true);
+    $('#pass1').val('************').attr('disabled', true);
+    $('#pass2').val('************').attr('disabled', true);
     $('#blinking-border').fadeIn('slow').fadeOut(1000);
 
 }
@@ -47,23 +45,26 @@ $(function() {
     });
     
     $('#adduser').submit(function() {
-        if ($.trim($('#username').val()) === '') {
-            $res.html("昵稱不可以留空").addClass('error');
+        var ulen = $.trim($('#username').val()).length;
+        var p1 = $.trim($('#pass1').val());
+        var p2 = $.trim($('#pass2').val());
+        
+        if ( ulen === 0 || ulen > 20) {
+            $res.html("昵稱不能爲空或過長").addClass('error');
             $res.show();
             return false;
         }
-        if ($.trim($('#pass1').val()) === '' ||
-            $.trim($('#pass2').val()) === '') {
+        if (p1 === '' || p2 === "") {
             $res.html("密碼不可以留空").addClass('error');
             $res.show();
             return false;
         }
-        if ($.trim($('#pass1').val()) !== $.trim($('#pass2').val())) {
+        if (p1 !== p2) {
             $res.html("兩次的密碼不一樣").addClass('error');
             $res.show();
             return false;
         }
-        if ($.trim($('#pass1').val()).length < 6) {
+        if (p1.length < 6) {
             $res.html("密碼長度應不少於六位").addClass('error');
             $res.show();
             return false;
@@ -80,6 +81,12 @@ $(function() {
         var role = +$('#role>option:selected').val();
         var intro = $.trim($('#intro').val());
         var update = {};
+
+        if (intro.length > 200) {
+            $res.html("用戶簡介過長").addClass('error');
+            $res.show();
+            return false;
+        }
         
         if (gEditUser.level !== role &&
             $('#role').attr('disabled') !== 'disabled') {
@@ -97,7 +104,7 @@ $(function() {
         var url = '/control-panel/user/edit/' + gEditUser.username;
         var posting = $.post(url, {'obj': update});
         posting.done(function(response) {
-            if (response === 'err') {
+            if (response !== 'ok') {
                 $res.hide();
                 $res.html('更新失敗！').addClass('error');
                 $res.show();

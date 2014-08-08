@@ -13,6 +13,7 @@ var Post = require('../models/post');
 var Category = require('../models/category');
 var Tag = require('../models/tag');
 var recountDb = require('../models/db').recount;
+var Fn = require('../models/func');
 
 var pageInfo = null;
 
@@ -25,10 +26,18 @@ exports.contentStat = function(req, res, next) {
         }
         req.jiqiyu.postStat = {};
         if (doc) {
-            req.jiqiyu.postStat.top = doc.property.topCounter || 0;
-            req.jiqiyu.postStat.post = doc.property.postCounter || 0;
-            req.jiqiyu.postStat.ppost = doc.property.ppostCounter || 0;
-            req.jiqiyu.postStat.draft = doc.property.draftCounter || 0;
+            req.jiqiyu.postStat.top =
+                (doc.property.topCounter && (doc.property.topCounter > 0)) ?
+                doc.property.topCounter : 0;
+            req.jiqiyu.postStat.post =
+                (doc.property.postCounter && (doc.property.postCounter > 0)) ?
+                doc.property.postCounter : 0;
+            req.jiqiyu.postStat.ppost =
+                (doc.property.ppostCounter && (doc.property.ppostCounter > 0)) ?
+                doc.property.ppostCounter : 0;
+            req.jiqiyu.postStat.draft =
+                (doc.property.draftCounter && (doc.property.draftCounter > 0)) ?
+                doc.property.draftCounter : 0;
             req.jiqiyu.postStat.total = req.jiqiyu.postStat.draft +
                 req.jiqiyu.postStat.top +
                 req.jiqiyu.postStat.post +
@@ -103,15 +112,25 @@ exports.login = function(req, res) {
     
     var ref = req.query.ref; // url.parse(req.url,true).query.ref;
     ref = ( ref === undefined) ? "" : ("?ref=" + ref);
+    var uname = Fn.getReqStr(req.body.username);
+    if (!uname) {
+        req.flash('error', '不合規的用戶名');
+        return res.redirect('/login' + ref);
+    }
     User.get(req.body.username, function(err, user) {
         if (!user) {
             req.flash('error', '用戶名或密碼不對，需重填');
             return res.redirect('/login' + ref);
         }
-        var password = require('crypto')
-                         .createHash('md5')
-                           .update(req.body.pwd)
-                             .digest('hex');
+        var password = req.body.pwd;
+        if (!password) {
+            req.flash('error', '請填寫密碼');
+            return res.redirect('/login' + ref);
+        }
+        password = require('crypto')
+                     .createHash('md5')
+                       .update(password)
+                         .digest('hex');
         if (user.password !== password) {
             req.flash('error', '用戶名或密碼不對，需重填');
             return res.redirect('/login' + ref);

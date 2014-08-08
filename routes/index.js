@@ -38,8 +38,11 @@ exports.checkAppointment = function(req, res, next) {
         if (!fl || !pl) { next(); }
         if (pl && (fl === pl)) {
             Post.postNew(postsArr, function(err, docs) {
-                if (err) { next(); }
-                Post.delPostsById(formerIdsArr, function(err, tag,
+                if (err) {
+                    console.log('#42,37');
+                    next();
+                }
+                Post.delPostsById(formerIdsArr, null, function(err, tag,
                                                          cat, author) {
                     User.delPid(author, function(err) {
                         var postProp = {
@@ -54,23 +57,24 @@ exports.checkAppointment = function(req, res, next) {
                                 el.tagid, el._id, el.state,
                                 function(err) {
                                     if (err) {
-                                        console.log('!error! index.js line #45');
+                                        console.log('!error! index.js #45');
                                     }
                                 });
                             Post.catAddPid(
                                 el.catid, el._id, el.state,
                                 function(err) {
                                     if (err) {
-                                        console.log('!error! index.js line #52');
+                                        console.log('!error! index.js #52');
                                     }
                                 });
                             Post.userAddPid(
                                 el.authorid, el._id, el.state,
                                 function(err) {
                                     if (err) {
-                                        console.log('!error! index.js line #59');
+                                        console.log('!error! index.js #59');
                                     }
                                 });
+                            // increase counter because of the Post.postnew action
                             if ((el.state === pstate.ontop) ||
                                 (el.state === pstate.ppost + pstate.ontop)) {
                                 ++postProp.topCounter;
@@ -79,7 +83,7 @@ exports.checkAppointment = function(req, res, next) {
                                 ++postProp.postCounter;
                             }
                             if (el.state === pstate.draft) {
-                                ++postProp.draftCounter;
+                                // ++postProp.draftCounter;
                             }
                             if (el.state === pstate.ppost) {
                                 // || el.state === pstate.ppost + pstate.ontop) {
@@ -88,7 +92,7 @@ exports.checkAppointment = function(req, res, next) {
                             if (++i === len) {
                                 Post.upsProperty(postProp, function(err) {
                                     if (err) {
-                                        console.log('!error! index.js line #79');
+                                        console.log('!error! index.js #79');
                                     }
                                 });
                             }
@@ -613,6 +617,14 @@ exports.thePost = function(req, res) {
                 if (user._id !== doc.authorid.toString()) {
                     return res.send('這是私有文章，僅作者可見');
                 }
+                if (doc.state === pstate.ppost + pstate.ontop) {
+                    doc.title = '[私人的][置頂]' + doc.title;
+                } else {
+                    doc.title = '[私人的]' + doc.title;
+                }
+            }
+            if (doc.state === pstate.ontop) {
+                doc.title = '[置頂]' + doc.title;
             }
             doc.date = id.getTimestamp().toDateString();
             doc.time = id.getTimestamp().toLocaleTimeString();
@@ -712,9 +724,16 @@ exports.getTaggedPosts = function(req, res) {
                 (el.state === pstate.ppost + pstate.ontop)) {
                 if (req.session.user &&
                     (req.session.user._id === el.authorid.toString())) {
+                    el.title = '私人的：' + el.title;
+                    if (el.state === pstate.ppost + pstate.ontop) {
+                        el.title = '置頂+私人的：' + el.title;
+                    }
                     posts.push(el);
                 }
             } else {
+                if (el.state === pstate.ontop) {
+                    el.title = '置頂：' + el.title;
+                }
                 posts.push(el);
             }
         });

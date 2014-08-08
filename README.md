@@ -5,7 +5,7 @@ Username: demo(super user) Password: demo
 
 # How to Install
 
-* Requirements
+* Prerequisites
   * Node.js  
     http://nodejs.org/
   * Mongodb-org  

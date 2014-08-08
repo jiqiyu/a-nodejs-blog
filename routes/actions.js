@@ -32,55 +32,62 @@ var parser = new Robotskirt.Markdown(renderer, [Robotskirt.EXT_TABLES,
                                                 // Robotskirt.EXT_FENCED_CODE,
                                                 Robotskirt.EXT_STRIKETHROUGH]);
 
-// exports.adduserForm = function(req, res) {
-    
-//     var user = req.session.user;
-//     if (!user || !user.level || user.level < ul.editor) {
-//         return res.send('你沒有新增用戶的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
-//     }
-//     recountDb();
-//     res.render('adduser', {title: '新增用戶 - MingRi.org',
-//                            name: req.cookies.name,
-//                            level: user.level,
-//                            ul: ul,
-//                            success : req.flash('success').toString(),
-// 			               error : req.flash('error').toString(),
-//                            documents: '網站的用戶有四種權限級別：1. 普通用戶，可瀏覽文章及發表評論；2. 作者，除擁有普通用戶權限外，還可發佈文章和管理普通用戶的評論；3. 編輯，除擁有作者之權限外，還可發佈及管理文章分類和標籤、管理作者發佈的文章和評論； 4. 超級用戶，除擁有編輯之權限外，還可管理用戶（增刪用戶、編輯用戶資料、權限等）及其發佈的內容；一個站點只有一位超級用戶。另，所有用戶可管理自己發佈的內容。'
-//                           });
-
-// };
-
 exports.adduser = function(req, res) {
     
-    if (!req.session.user || !req.session.user.level ||
-        req.session.user.level < ul.editor) {
-        return res.send('你沒有添加用戶的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (!Fn.auth(req.session.user, 'editor', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
-    if (!req.body.username || !req.body.pass1 || !req.body.pass2) {
+
+    var name = Fn.getReqStr(req.body.username);
+    var pass1 = Fn.getReqStr(req.body.pass1);
+    var pass2 = Fn.getReqStr(req.body.pass2);
+    var email = Fn.getReqStr(req.body.email);
+    var intro = Fn.getReqStr(req.body.intro);
+    
+    if (!name || !pass1 || !pass2) {
         req.flash('error', '用戶名或密碼不可以留空');
         return res.redirect('/control-panel/user');
     }
-    if (req.body.pass1 !== req.body.pass2) {
+    if (name.length > 20) {
+        req.flash('error', '用戶名過長');
+        return res.redirect('/control-panel/user');
+    }
+    if (pass1 !== pass2) {
         req.flash('error', '密碼兩次輸入得不一樣');
         return res.redirect('/control-panel/user');
     }
-    if (req.body.pass1.length < 6) {
+    if (pass1.length < 6) {
         req.flash('error', '密碼太過短，至少要六位');
         return res.redirect('/control-panel/user');
     }
     var reEmail = new RegExp(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9._%+-]+\.[a-zA-z]{2,6}$/);
-    if (req.body.email && req.body.email.search(reEmail) === -1) {
+    if (email && email.search(reEmail) === -1) {
         req.flash('error', '郵箱格式不對');
         return res.redirect('/control-panel/user');
     }
-    var user = {"name": req.body.username,
+    if (email.length > 64) {
+        req.flash('error', '郵箱過長');
+        return res.redirect('/control-panel/user');
+    }
+    if (intro && intro.length > 200) {
+        req.flash('error', '用戶簡介過長');
+        return res.redirect('/control-panel/user');
+    }
+
+    var role = req.body.role;
+    if (!Fn.isRole(role)) {
+        req.flash('error', 'invalid role');
+        return res.redirect('/control-panel/user');
+    }
+
+    var user = {"name": name,
                 "password": require('crypto')
                               .createHash('md5')
-                                .update(req.body.pass1)
+                                .update(pass1)
                                   .digest('hex'),
-                "level": +req.body.role,
-                "email": req.body.email,
-                "intro": req.body.intro || ''
+                "level": +role,
+                "email": email,
+                "intro": intro || ''
                };
     User.add(user, function(err, user) {
         if (err) {
@@ -97,8 +104,8 @@ exports.adduser = function(req, res) {
 exports.delUser = function(req, res) {
 
     var user = req.session.user;
-    if (!user || !user.level || (user.level < ul.su) ) {
-        return res.send('你沒有刪除用戶的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (!Fn.auth(user, 'su', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
     
     var userid = ObjectId(req.params[0]);
@@ -116,12 +123,25 @@ exports.delUser = function(req, res) {
 exports.editUser = function(req, res) {
 
     var user = req.session.user;
-    if (!user || !user.level || (user.level < ul.su) ) {
-        return res.send('你沒有編輯用戶的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (!Fn.auth(user, 'su', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
     
-    var username = req.params[0];
-    User.edit(username, req.body.obj, function(err) {
+    var username = Fn.trim(req.params[0]);
+    var data = req.body.obj;
+    data.intro = Fn.getReqStr(data.intro);
+    
+    if (!Fn.isRole(data.level)) {
+        return res.send('error #145,36');
+    }
+    if (!data.level && !data.intro) {
+        return res.send('err: nothing changed');
+    }
+    if (data.intro.length > 200) {
+        return res.send('err: intro too long');
+    }
+    
+    User.edit(username, data, function(err) {
         if (err) {
             console.log(err);
             return res.send('err');
@@ -136,9 +156,10 @@ exports.loadCategoryTree = function(req, res, next) {
     req.jiqiyu = req.jiqiyu || {};
     
     var user = req.jiqiyu.user = req.session.user;
-    if (req.url.indexOf('/control-panel') !== -1 &&
-        (!user || !user.level || user.level < ul.author) ) {
-        return res.send('你沒有發文章／編輯文章的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (req.url.indexOf('/control-panel') !== -1) {
+        if (!Fn.auth(user, 'author', ul)) {
+            return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+        }
     }
 
     Category.tree(function(err, count, depth, rootleaf, parent, child, leaf) {
@@ -211,7 +232,7 @@ exports.postNewForm = function(req, res) {
                            level: req.jiqiyu.user.level,
                            ul: ul,
                            authorList: req.jiqiyu.authorList,
-                           documents: ''
+                           documents: 'see more information about markdown syntax, go to: http://daringfireball.net/projects/markdown/syntax'
                           });
 
 };
@@ -220,17 +241,16 @@ exports.getTagId = function(req, res, next) {
     
     req.jiqiyu = req.jiqiyu || {};
     var user = req.jiqiyu.user = req.session.user;
-    if (!user || !user.level || (user.level < ul.author) ) {
-        return res.send('你沒有發文章的權限，<a href="/">點這裏去首頁</a>');
+    if (!Fn.auth(user, 'author', ul)) {
+        return res.send('權限不足，<a href="/">點這裏去首頁</a>');
     }
     
     req.jiqiyu.tagId = [];
     req.jiqiyu.tagNew = [];
 
     if (req.body.tag !== undefined) {
-        var tag = req.body.tag;
-        // todo: 添加數據合法性驗證
-        if (/^[\s,]*$/.test(tag)) {
+        var tag = Fn.getReqStr(req.body.tag);
+        if (!tag || /^[\s,]*$/.test(tag)) {
             req.jiqiyu.tagArray = ['沒有標籤'];
         } else {
             var re0 = /(^[\s,]|[\s,]$)/g;
@@ -239,21 +259,27 @@ exports.getTagId = function(req, res, next) {
                 tag = tag.replace(re0, '').replace(re1, ',');
             }
             req.jiqiyu.tagArray = tag.split(',');
+            var tagArrLen = req.jiqiyu.tagArray.length;
+            for (var i=0; i<tagArrLen; i++) {
+                if (req.jiqiyu.tagArray[i].length > 20) {
+                    return res.send('一個或多個標籤過長');
+                }
+            }
         }
 
-        if (!req.jiqiyu.tagArray.length) {
+        if (!tagArrLen) {
             req.jiqiyu.tagArray = ['沒有標籤'];
         }
         
         Post.getTagId(req.jiqiyu.tagArray, function(err, doc) {
-            if (err) { return res.send('!error! action.js line #172'); }
+            if (err) { return res.send('!error! action.js #172'); }
             if (doc) {
                 var temp = [];
                 doc.forEach(function(el) {
                     req.jiqiyu.tagId.push(el._id);
                     temp.push(el.name);
                 });
-                if (doc.length < req.jiqiyu.tagArray.length) {
+                if (doc.length < tagArrLen) {
                     req.jiqiyu.tagArray.forEach(function(el) {
                         function unEqual(element, index, array) {
                             return (element !== el);
@@ -272,7 +298,7 @@ exports.getTagId = function(req, res, next) {
             if (req.jiqiyu.tagNew.length) {
                 Tag.add(req.jiqiyu.tagNew, function(err, doc) {
                     if (err) {
-                        return res.send('!error! action.js line #198');
+                        return res.send('!error! action.js #198');
                     }
                     doc.forEach(function(el) {
                         req.jiqiyu.tagId.push(el._id);
@@ -285,12 +311,11 @@ exports.getTagId = function(req, res, next) {
 
 };
 
-// todo: 添加數據合法性驗證
 exports.getCatId = function(req, res, next) {
     
     req.jiqiyu.catId = [];
     req.jiqiyu.catNew = [];
-    
+
     if (req.body.category === undefined && !req.body.parentid) {
         req.jiqiyu.catNew.push({'name': '未分類',
                                 'isdefault': true,
@@ -298,9 +323,14 @@ exports.getCatId = function(req, res, next) {
                                 'haschildren': false
                                });
     }
-    if (req.body.category) {
+    if (req.body.category = Fn.getReqStr(req.body.category)) {
+        if (!Fn.isObjectIdString(req.body.category)) {
+            return res.send('error #346,40');
+        }
         req.jiqiyu.catId.push(ObjectId(req.body.category));
-    } else if (req.body.newcatname && req.body.parentid) {
+    } else if (
+        (req.body.newcatname = Fn.getReqStr(req.body.newcatname)) &&
+            (req.body.parentid = Fn.getReqStr(req.body.parentid))) {
         if (req.jiqiyu.user.level < ul.editor) {
             return res.send('錯誤：編輯或以上權限的用戶才可以新建分類，<a onclick="javascript:history.back();" style="cursor: pointer; border-bottom: 1px solid blue; color: blue">返回</a>');
         }
@@ -313,6 +343,9 @@ exports.getCatId = function(req, res, next) {
                 'haschildren': false
             });
         } else {
+            if (!Fn.isObjectIdString(tmp[0]) || isNaN(+tmp[1])) {
+                return res.send('error #366,44');
+            }
             req.jiqiyu.catNew.push({
                 'name': req.body.newcatname,
                 'depth': +tmp[1] + 1,
@@ -322,7 +355,7 @@ exports.getCatId = function(req, res, next) {
             parentidArr.push(ObjectId(tmp[0]));
         }
     } else {
-        return res.send('錯誤：新分類名爲空，<a onclick="javascript:history.back();" style="cursor: pointer; border-bottom: 1px solid blue; color: blue">返回</a>');
+        return res.send('error #377,36'); /*<a onclick="javascript:history.back();" style="cursor: pointer; border-bottom: 1px solid blue; color: blue">返回</a>'*/
     }
 
     if (req.jiqiyu.catNew.length) {
@@ -332,7 +365,7 @@ exports.getCatId = function(req, res, next) {
                                 return res.send('錯誤：分類名重複了，<a onclick="javascript:history.back();" style="cursor: pointer; border-bottom: 1px solid blue; color: blue">返回重填</a>');
                             }
                             if (err) {
-                                return res.send('!error! action.js line #269');
+                                return res.send('!error! action.js #269');
                             }
                             doc.forEach(function(el) {
                                 req.jiqiyu.catId.push(el._id);
@@ -343,15 +376,17 @@ exports.getCatId = function(req, res, next) {
     
 };
 
-// todo: 添加數據合法性檢驗
 exports.postNew = function(req, res, next) {
 
+    req.jiqiyu.postNew = true; // used in upsProperty function
     var user = req.jiqiyu.user;
     var post = {};
-    post.title = req.body.title;
-
-    post.original = req.body.content;
-    var tempstring = req.body.content
+    post.title = Fn.getReqStr(req.body.title);
+    post.original = Fn.getReqStr(req.body.content);
+    if (!post.title || !post.original) {
+        return res.send('error #406,36');
+    }
+    var tempstring = post.original
                        .replace(/<([^> ]+)/gi,"&lt;$1")
                          .replace(/<\/([^> ]+)/gi, "&lt;$1");
 
@@ -397,7 +432,7 @@ exports.postNew = function(req, res, next) {
     var pos = tempstring.indexOf('[[!more]]');
     if (pos !== -1) {
         post.more = pos;
-        post.content = tempstring.replace('[[!more]]', '\n');
+        post.content = tempstring.replace(/\[\[\!more\]\]/gi, '\n');
     } else {
         post.content = tempstring;
     }
@@ -406,11 +441,15 @@ exports.postNew = function(req, res, next) {
     post.tagid = req.jiqiyu.tagId;
     post.state = req.jiqiyu.state =
         (req.body.submitpost === "發佈" &&
-         !req.body.appointed_time) ? pstate.post : pstate.draft;
+         !Fn.parseBool(req.body.appointed_time)) ?
+        pstate.post : pstate.draft;
     post.commentid = [];
 
-    if (req.body.author) {
+    if (req.body.author = Fn.getReqStr(req.body.author)) {
         var au = req.body.author.split(',');
+        if (!Fn.isObjectIdString(au[0])) {
+            return res.send('error #468,40');
+        }
         req.jiqiyu.authorname = au[2];
         post.authorid = ObjectId(au[0]);
         // if (+au[1] > ul.author) {
@@ -424,64 +463,46 @@ exports.postNew = function(req, res, next) {
         // }
     }
 
-    if (!req.body.appointed_time && post.state) {
+    if (!Fn.parseBool(req.body.appointed_time) && post.state) {
         var d = new Date();
         post.year = d.getFullYear();
         post.month = d.getMonth() + 1;
     }
 
-    if (req.body.commentoff) {
+    if (Fn.parseBool(req.body.commentoff)) {
         post.commentoff = true;
     }
-    if (req.body.isprivate) {
+    if (Fn.parseBool(req.body.isprivate)) {
         if (post.state) {
-            if (req.body.ontop) {
+            if (Fn.parseBool(req.body.ontop)) {
                 post.state = req.jiqiyu.state =
                     pstate.ppost + pstate.ontop;
             } else {
                 post.state = req.jiqiyu.state = pstate.ppost;
             }
-        } else { // if post.state===pstate.draft
+        } else { // if post.state === pstate.draft
             post.isprivate = true;
         }
     }
-    if (req.body.appointed_time) {            
-        var n = new Date();
-        var year = +req.body.year;
-        var month = +req.body.month;
-        var day = +req.body.day;
-        var hour = +req.body.hour;
-        var minute = +req.body.minute;
-        var second = +req.body.second;
-        if (/^\d{4}$/.test(year) &&
-            /^\d{1,2}$/.test(month) &&
-            /^\d{1,2}$/.test(day) &&
-            /^\d{1,2}$/.test(hour) &&
-            /^\d{1,2}$/.test(minute) &&
-            /^\d{1,2}$/.test(second)) {
-            var date = new Date(year, month, day, hour,
-                                minute, second);
-            if (date.getFullYear() === year &&
-                date.getMonth() === month &&
-                date.getDate() === day &&
-                date.getHours() === hour &&
-                date.getMinutes() === minute &&
-                date.getSeconds() === second) {
-                post.appointed_time = new Date(year, month, day, hour,
-                                           minute, second).getTime();
-                post.year = year;
-                post.month = month + 1;
-            } else {
-                return res.send('appointed_time error!');
-            }
+    if (Fn.parseBool(req.body.appointed_time)) {
+        var apt;
+        if (apt = Fn.reqAppointTime(req.body.year,
+                                    req.body.month,
+                                    req.body.day,
+                                    req.body.hour,
+                                    req.body.minute,
+                                    req.body.second)) {
+            post.appointed_time = apt;
+            post.year = +req.body.year;
+            post.month = +req.body.month;
         } else {
             return res.send('appointed_time error!');
         }
     }
 
-    if (req.body.ontop) {
+    if (Fn.parseBool(req.body.ontop)) {
         if (post.state) {
-            if (req.body.isprivate) {
+            if (Fn.parseBool(req.body.isprivate)) {
                 post.state = req.jiqiyu.state =
                     pstate.ppost + pstate.ontop;
             } else {
@@ -494,7 +515,7 @@ exports.postNew = function(req, res, next) {
     
     Post.postNew(post, function(err, doc) {
         if (err) {
-            return res.send('!error! action.js line #377');
+            return res.send('!error! action.js #377');
         }
         
         req.jiqiyu.postId = doc[0]._id;
@@ -523,22 +544,35 @@ exports.upsProperty = function(req, res, next) {
     };
 
     if (req.jiqiyu.state !== undefined) {
-        if ((req.jiqiyu.state === pstate.ontop) ||
-            (req.jiqiyu.state === pstate.ppost + pstate.ontop)) {
-            ++postProp.topCounter;
+        if (req.jiqiyu.postNew) {
+            if ((req.jiqiyu.state === pstate.ontop) ||
+                (req.jiqiyu.state === pstate.ppost + pstate.ontop)) {
+                ++postProp.topCounter;
+            }
+            if (req.jiqiyu.state === pstate.post) {
+                ++postProp.postCounter;
+            }
+            if (req.jiqiyu.state === pstate.draft) {
+                ++postProp.draftCounter;
+            }
+            if (req.jiqiyu.state === pstate.ppost) {
+                // || req.jiqiyu.state === pstate.ppost + pstate.ontop) {
+                ++postProp.ppostCounter;
+            }
         }
-        if (req.jiqiyu.state === pstate.post) {
+
+        // edit post
+        if (req.jiqiyu.incPostCounter) {
             ++postProp.postCounter;
         }
-        if (req.jiqiyu.state === pstate.draft) {
-            ++postProp.draftCounter;
-        }
-        if (req.jiqiyu.state === pstate.ppost) {
-            // || req.jiqiyu.state === pstate.ppost + pstate.ontop) {
+        if (req.jiqiyu.incPpostCounter) {
             ++postProp.ppostCounter;
         }
+        if (req.jiqiyu.incTopCounter) {
+            ++postProp.topCounter;
+        }
         
-        if (req.jiqiyu.postDraft) {
+        if (req.jiqiyu.decDraftCounter) {
             --postProp.draftCounter;
         }
         if (req.jiqiyu.decPostCounter) {
@@ -571,7 +605,7 @@ exports.postRelatedFields = function(req, res, next) {
         req.jiqiyu.state,
         function(err) {
             if (err) {
-                return res.send('!error! action.js line #454');
+                return res.send('!error! action.js #454');
             }
             Post.catAddPid(
                 req.jiqiyu.catId,
@@ -579,7 +613,7 @@ exports.postRelatedFields = function(req, res, next) {
                 req.jiqiyu.state,
                 function(err) {
                     if (err) {
-                        return res.send('!error! action.js line #462');
+                        return res.send('!error! action.js #462');
                     }
                     next();
                 });
@@ -605,8 +639,8 @@ exports.delPostsById = function(req, res, next) {
     req.jiqiyu = req.jiqiyu || {};
     var pidArr = [ObjectId(req.params[0])];
     var user = req.jiqiyu.user = req.session.user;
-    if (!user || !user.level || user.level < ul.author) {
-        return res.send('你沒有刪文章的權限，<a href="/">點這裏去首頁</a>');
+    if (!Fn.auth(user, 'author', ul)) {
+        return res.send('權限不足，<a href="/">點這裏去首頁</a>');
     }
     
     Post.delPostsById(pidArr, user, function(err, tag, cat, author) {
@@ -690,19 +724,30 @@ exports.catNewForm = function(req, res) {
 
 exports.catNew = function(req, res) {
 
-    if (!req.session.user || req.session.user.level < ul.editor) {
-        return res.send('你沒有添加分類的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (!Fn.auth(req.session.user, 'editor', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
+    
     var cat = {};
-    var parent = req.body.parent.split(',');
+    if (!(req.body.parent = Fn.getReqStr(req.body.parent)) ||
+        !(req.body.catname = Fn.getReqStr(req.body.catname))) {
+        return res.send('error #762,36');
+    }
+    var parent = req.body.parent.split(',');   
     cat.name = req.body.catname;
+    if (catname.length > 20) {
+        return res.send('error #772,36');
+    }
     cat.depth = (+parent[1] + 1) || 0;
     cat.haschildren = false;
     if (req.body.parent !== 'nil') {
+        if (isNaN(+parent[1]) || !Fn.isObjectIdString(parent[0])) {
+            return res.send('error #774,40');
+        }
         cat.id = req.body.catname.concat(parent[0]);
         cat.parent = ObjectId(parent[0]);
     }
-    if (/^\s*$/.test(req.body.description) === false) {
+    if (Fn.getReqStr(req.body.description)) {
         cat.description = req.body.description;
     }
     Category.catNew(cat, [cat.parent], function(err, doc) {
@@ -717,12 +762,15 @@ exports.catNew = function(req, res) {
     
 };
 
+// todo: data validation
 exports.catEdit = function(req, res) {
 
     var user = req.session.user;
-    if (!user || !user.level || (user.level < ul.editor) ) {
-        return res.send('你沒有編輯分類的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (!Fn.auth(user, 'editor', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
+    // var catObj = req.body.obj;
+    // if ()
     Category.edit(req.body.obj, function(err, data) {
         if (err) {
             return res.send({err: err});
@@ -735,10 +783,13 @@ exports.catEdit = function(req, res) {
 exports.catDelOne = function(req, res) {
 
     var user = req.session.user;
-    if (!user || !user.level || (user.level < ul.editor) ) {
-        return res.send('你沒有編輯分類的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (!Fn.auth(user, 'editor', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
 
+    if (!Fn.isObjectIdString(req.query.id)) {
+        return res.send('error #825,36');
+    }
     var cat = [ObjectId(req.query.id)];
     var subcat = req.query.subcat ?
         req.query.subcat.split(',') : [];
@@ -766,13 +817,13 @@ exports.catDelOne = function(req, res) {
 exports.editPostForm = function(req, res) {
 
     var user = req.jiqiyu.user = req.session.user;
-    if (!user || !user.level || (user.level < ul.author) ) {
-        return res.send('你沒有編輯文章的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (!Fn.auth(user, 'author', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
     var pid = ObjectId(req.params[0]);
     var at = pid.getTimestamp();
-    var au = req.query.au;
-    var tag = req.query.tag;
+    var au = Fn.getReqStr(req.query.au);
+    var tag = Fn.getReqStr(req.query.tag);
     
     var authorList = [];
     var currUser = {};
@@ -790,7 +841,7 @@ exports.editPostForm = function(req, res) {
                     doc.state === pstate.ppost ||
                     doc.state === pstate.ontop + pstate.ppost ||
                     (doc.level && user.level <= doc.level) ) {
-                    return res.send('你沒有編輯此文章的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+                    return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
                 }
                 authorList.push({
                     '_id': doc.authorid,
@@ -825,9 +876,9 @@ exports.editPostForm = function(req, res) {
                 postlevel: doc.level || false,
                 ul: ul,
                 authorList: authorList,
-                last_edit: doc.last_edit || '',
+                last_edit: ('此前更新於' + new Date(doc.last_edit).toLocaleString("zh-Hans-CN") + ' By ' + (doc.last_edit_user || '')) || '',
                 referrer: req.query.ref || '',
-                appointed_time: doc.appointed_time && !doc.state ?
+                appointed_time: (doc.appointed_time && !doc.state) ?
                     doc.appointed_time : false,
                 documents: ''
             });
@@ -839,119 +890,257 @@ exports.editPostForm = function(req, res) {
 exports.editPostProp = function(req, res, next) {
 
     req.jiqiyu = req.jiqiyu || {};
-    var user = req.jiqiyu.user = req.session.user;
-    if (!user || !user.level || (user.level < ul.author)) {
-        return res.send('你沒有編輯文章的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
-    }
-    var author = req.body.former.author.split(',');
-    if (user._id !== author[0] && user.level <= +author[1]) {
-        return res.send('你沒有編輯此文章的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
-    }
 
+    var user = req.jiqiyu.user = req.session.user;
+    if (!Fn.auth(user, 'author', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    }
+    
     req.jiqiyu.pid = ObjectId(req.params[0]);
     req.jiqiyu.draftProp = {};
-
-    req.body.former.isprivate =
-        Fn.parseBool(req.body.former.isprivate);
-    req.body.former.ontop = Fn.parseBool(req.body.former.ontop);
-    req.body.former.draft = Fn.parseBool(req.body.former.draft);
     
-    if (req.body.former.draft && !req.body.at) {
-        req.jiqiyu.postDraft = true;
-    }
-    if (req.body.isprivate !== undefined &&
-        req.body.ontop !== undefined) {
-        req.body.isprivate = Fn.parseBool(req.body.isprivate);
-        req.body.ontop = Fn.parseBool(req.body.ontop);
-        
-        if (req.body.at) {
-            req.jiqiyu.draftProp.isprivate = req.body.isprivate;
-            req.jiqiyu.draftProp.ontop = req.body.ontop;
+    Post.getPostById(req.jiqiyu.pid, function(err, doc) {
+        if (err) {
+            return res.send('文章加載出錯');
         }
-        if (req.body.isprivate) { // make private
-            if (req.body.ontop) {
-                req.jiqiyu.state = pstate.ppost + pstate.ontop;
-                req.jiqiyu.decPostCounter = !req.jiqiyu.postDraft;
-            } else { // make private & cancel ontop
-                req.jiqiyu.decTopCounter = !req.jiqiyu.postDraft;
+        if (user._id !== doc.authorid.toString() &&
+            user.level <= doc.level) {
+            return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+        }
+        req.jiqiyu.former = {
+            title: doc.title,
+            // content: doc.original,
+            // author: doc.authorid,
+            // tag: doc.tagid,
+            category: doc.catid[0],
+            at: doc.appointed_time,
+            pstate: doc.state,
+            more: doc.more,
+            year: doc.year,
+            month: doc.month,
+            commentoff: Fn.parseBool(doc.commentoff),
+            ontop: Fn.parseBool(doc.ontop),
+            isprivate: Fn.parseBool(doc.isprivate),
+            draft: !Fn.parseBool(doc.state)
+        };
+
+        if (req.jiqiyu.former.draft && req.body.pstate === undefined) {
+            req.jiqiyu.saveDraft = true;
+        }
+
+        if (Fn.isPostState(req.body.pstate)) { // post state changed
+            if (req.jiqiyu.former.pstate === 0) {
+                req.jiqiyu.decDraftCounter = true;
+                if (req.former.isprivate && req.jiqiyu.former.ontop) {
+                    if (req.body.ontop !== undefined &&
+                        req.body.isprivate !== undefined) {
+                        req.jiqiyu.incPostCounter = true;
+                    } else if (req.body.ontop !== undefined) {
+                        req.jiqiyu.incPpostCounter = true;
+                    } else if (req.body.isprivate !== undefined) {
+                        req.jiqiyu.incTopCounter = true;
+                    } else {
+                        req.jiqiyu.incTopCounter = true;
+                    }
+                } else if (req.jiqiyu.former.isprivate) {
+                    if (req.body.isprivate !== undefined &&
+                        req.body.ontop !== undefined) {
+                        req.jiqiyu.incTopCounter = true;
+                    } else if (req.body.isprivate !== undefined) {
+                        req.jiqiyu.incPostCounter = true;
+                    } else if (req.body.ontop !== undefined) {
+                        req.jiqiyu.incTopCounter = true;
+                    } else {
+                        req.jiqiyu.incPpostCounter = true;
+                    }
+                } else if (req.jiqiyu.former.ontop) {
+                    if (req.body.isprivate !== undefined &&
+                        req.body.ontop !== undefined) {
+                        req.jiqiyu.incPpostCounter = true;
+                    } else if (req.body.isprivate !== undefined) {
+                        req.jiqiyu.incTopCounter = true;
+                    } else if (req.body.ontop !== undefined) {
+                        req.jiqiyu.incPostCounter = true;
+                    } else {
+                        req.jiqiyu.incTopCounter = true;
+                    }
+                } else {
+                    if (req.body.isprivate !== undefined &&
+                        req.body.ontop !== undefined) {
+                        req.jiqiyu.incTopCounter = true;
+                    } else if (req.body.isprivate !== undefined) {
+                        req.jiqiyu.incPpostCounter = true;
+                    } else if (req.body.ontop !== undefined) {
+                        req.jiqiyu.incTopCounter = true;
+                    } else {
+                        req.jiqiyu.incPostCounter = true;
+                    }
+                }
+                next();
             }
-        } else { // make public
-            if (req.body.ontop) {
-                req.jiqiyu.state = pstate.ontop;
-                req.jiqiyu.decPpostCounter = !req.jiqiyu.postDraft;
-            } else { // make public & cancel ontop
-                req.jiqiyu.decTopCounter = !req.jiqiyu.postDraft;
-                req.jiqiyu.state = pstate.post;
+            if (req.jiqiyu.former.pstate === 1) {
+                if (req.body.ontop !== undefined &&
+                    req.body.isprivate !== undefined) {
+                    // post -> top+priv (1to5)
+                    if (Fn.parseBool(req.body.isprivate)
+                        && Fn.parseBool(req.body.ontop)) {
+                        req.jiqiyu.state = pstate.ppost + pstate.ontop;
+                        req.jiqiyu.decPostCounter = true;
+                        req.jiqiyu.incTopCounter = true;
+                    }
+                } else if (req.body.ontop !== undefined) { 
+                    // post -> top (1to3)
+                    if (Fn.parseBool(req.body.ontop)) {
+                        req.jiqiyu.state = pstate.ontop;
+                        req.jiqiyu.decPostCounter = true;
+                        req.jiqiyu.incTopCounter = true;
+                    }
+                } else if (req.body.isprivate !== undefined) {
+                    // post-> priv (1to2)
+                    if (Fn.parseBool(req.body.isprivate)) {
+                        req.jiqiyu.state = pstate.ppost;
+                        req.jiqiyu.decPostCounter = true;
+                        req.jiqiyu.incPpostCounter = true;
+                    }
+                }
             }
-        }
-    } else if (req.body.isprivate !== undefined) {
-        req.body.isprivate = Fn.parseBool(req.body.isprivate);
-        
-        if (req.body.at) {
-            req.jiqiyu.draftProp.isprivate = req.body.isprivate;
-        }
-        if (req.body.isprivate) {
-            req.jiqiyu.state = req.body.former.ontop ?
-                undefined : pstate.ppost;
-            req.jiqiyu.decPostCounter = Fn.parseBool(req.jiqiyu.state);
-        } else {
-            req.jiqiyu.decPpostCounter = !req.jiqiyu.postDraft &&
-                !req.body.former.ontop;
-            req.jiqiyu.state = !req.body.former.ontop ?
-                pstate.post : undefined;
-        }
-    } else if (req.body.ontop !== undefined) {
-        req.body.ontop = Fn.parseBool(req.body.ontop);
-        
-        if (req.body.at) {
-            req.jiqiyu.draftProp.ontop = req.body.ontop;
-        }
-        if (req.body.ontop) {
-            req.jiqiyu.state = pstate.ontop;
-            req.jiqiyu.decPpostCounter = req.body.former.isprivate;
-            req.jiqiyu.decPostCounter = !req.jiqiyu.decPpostCounter;
-        } else {
-            if (req.body.former.isprivate) {
-                req.jiqiyu.state = pstate.ppost;
-            } else {
-                req.jiqiyu.state = pstate.post;
+            if (req.jiqiyu.former.pstate === 2) {
+                if (req.body.ontop !== undefined &&
+                    req.body.isprivate !== undefined) {
+                    // priv -> top (2to3)
+                    if (Fn.parseBool(req.body.ontop) &&
+                        !Fn.parseBool(req.body.isprivate)) {
+                        req.jiqiyu.state = pstate.ontop;
+                        req.jiqiyu.decPpostCounter = true;
+                        req.jiqiyu.incTopCounter = true;
+                    }
+                } else if (req.body.ontop !== undefined) {
+                    // priv -> priv+top (2to5)
+                    if (Fn.parseBool(req.body.ontop)) {
+                        req.jiqiyu.state = pstate.ontop + pstate.ppost;
+                        req.jiqiyu.decPpostCounter = true;
+                        req.jiqiyu.incTopCounter = true;
+                    }
+                } else if (req.body.isprivate !== undefined) {
+                    // priv -> post (2to1)
+                    if (!Fn.parseBool(req.body.isprivate)) {
+                        req.jiqiyu.state = pstate.post;
+                        req.jiqiyu.decPpostCounter = true;
+                        req.jiqiyu.incPostCounter = true;
+                    }
+                }
             }
-            req.jiqiyu.decTopCounter = !req.jiqiyu.postDraft;
+            if (req.jiqiyu.former.pstate === 3) {
+                if (req.body.ontop !== undefined &&
+                    req.body.isprivate !== undefined) {
+                    // top -> post (3to2)
+                    if (!Fn.parseBool(req.body.ontop) &&
+                        Fn.parseBool(req.body.isprivate)) {
+                        req.jiqiyu.state = pstate.ppost;
+                        req.jiqiyu.decTopCounter = true;
+                        req.jiqiyu.incPpostCounter = true;
+                    }
+                } else if (req.body.ontop !== undefined) {
+                    // top -> priv (3to1)
+                    if (!Fn.parseBool(req.body.ontop)) {
+                        req.jiqiyu.state = pstate.post;
+                        req.jiqiyu.decTopCounter = true;
+                        req.jiqiyu.incPostCounter = true;
+                    }
+                } else if (req.body.isprivate !== undefined) {
+                    // top -> top+priv (3to5)
+                    if (Fn.parseBool(req.body.isprivate)) {
+                        req.jiqiyu.state = pstate.ontop + pstate.ppost;
+                    }
+                }
+            }
+            if (req.jiqiyu.former.pstate === 5) {
+                if (req.body.ontop !== undefined &&
+                    req.body.isprivate !== undefined) {
+                    // top+priv -> post (5to1)
+                    if (!Fn.parseBool(req.body.ontop) &&
+                        !Fn.parseBool(req.body.isprivate)) {
+                        req.jiqiyu.state = pstate.post;
+                        req.jiqiyu.decTopCounter = true;
+                        req.jiqiyu.incPostCounter = true;
+                    }
+                } else if (req.body.ontop !== undefined) {
+                    // top+priv -> priv (5to2)
+                    if (!Fn.parseBool(req.body.ontop)) {
+                        req.jiqiyu.state = pstate.ppost;
+                        req.jiqiyu.decTopCounter = true;
+                        req.jiqiyu.incPpostCounter = true;
+                    }
+                } else if (req.body.isprivate !== undefined) {
+                    // top+priv -> top (5to3)
+                    if (!Fn.parseBool(req.body.isprivate)) {
+                        req.jiqiyu.state = pstate.ontop;
+                    }
+                }
+            }
+            next();
+        } else { // post state unchanged
+            if (req.jiqiyu.saveDraft) {
+                if (req.body.isprivate !== undefined) {
+                    req.jiqiyu.draftProp.isprivate =
+                        Fn.parseBool(req.body.isprivate);
+                }
+                if (req.body.ontop !== undefined) {
+                    req.jiqiyu.draftProp.ontop =
+                        Fn.parseBool(req.body.ontop);
+                }
+            }
+            next();
         }
-    }
-    next();
+    });
     
 };
 
 exports.editPostCat = function(req, res, next) {
 
-    var state = req.body.pstate || req.body.former.pstate;
-    if (req.body.category && !req.body.newcatname) {
+    var state = +req.body.pstate || req.jiqiyu.former.pstate;
+    if (!Fn.isPostState(state)) {
+        return res.send('error #1025,37');
+    }
+    if (state === pstate.draft) {
+        next();
+    }
+    if (Fn.isObjectIdString(req.body.category) && !req.body.newcatname) { console.log('11111');
         Category.change(
-            [ObjectId(req.body.former.category)],
+            [req.jiqiyu.former.category],
             ObjectId(req.body.category),
             [{
                 pid: req.jiqiyu.pid,
                 state: +state,
-                formerState: +req.body.former.pstate
+                formerState: +req.jiqiyu.former.pstate
             }],
             function(err, result) {
                 if (err) {
-                    console.log('!error! action.js line #710');
+                    console.log('!error! action.js #710');
                 }
                 next();
             });
-    } else if (req.body.newcatname) {
-        if (req.jiqiyu.user.level < ul.editor) {
-            return res.send('new cat error');
+    } else if (req.body.newcatname = Fn.getReqStr(req.body.newcatname)) { 
+        if (!Fn.auth(req.jiqiyu.user, 'editor', ul)) {
+            return res.send('no privilege');
         }
         var cat = {};
         cat.name = req.body.newcatname;
+        if (!cat.name.length || cat.name.length > 20) {
+            return res.send('invalid newcatname');
+        }
         cat.haschildren = false;
-        cat.parent = req.body.parentid === 'nil' ?
-            undefined : ObjectId(req.body.parentid.split(',')[0]);
-        cat.depth = req.body.parentid === 'nil' ?
-            0 : +req.body.parentid.split(',')[1] + 1;
+        cat.depth = 0;
+        if (req.body.parentid !== 'nil' &&
+            (req.body.parentid = Fn.getReqStr(req.body.parentid))) {
+            if (Fn.isObjectIdString(req.body.parentid.split(',')[0])) {
+                cat.parent = ObjectId(req.body.parentid.split(',')[0]);
+                if (!isNaN(+req.body.parentid.split(',')[1])) {
+                    cat.depth = +req.body.parentid.split(',')[1] + 1;
+                }
+            }
+        }
+        
         switch (+state) {
         case pstate.draft:
             break;
@@ -967,7 +1156,8 @@ exports.editPostCat = function(req, res, next) {
             [cat.parent],
             function(err, doc) {
                 if (err) {
-                    console.log('!error! action.js line #735');
+                    console.log('!error! action.js #1088');
+                    return res.send(err);
                 }
                 req.jiqiyu.newCatIdArr = [];
                 doc.forEach(function(el) {
@@ -975,29 +1165,29 @@ exports.editPostCat = function(req, res, next) {
                 });
                 Category.delPid(
                     [{
-                        id: [ObjectId(req.body.former.category)],
+                        id: [req.jiqiyu.former.category],
                         pid: cat.postid ? cat.postid[0] : '',
                         ppid: cat.ppostid ? cat.ppostid[0] : ''
                     }],
                     function(err) {
                         if (err) {
-                            console.log('!error! action.js line #746');
+                            console.log('!error! action.js #1103');
                         }
                         next();
                     });
             });
-    } else if (req.body.pstate) {
+    } else if (state) { console.log('111113'); console.log(req.jiqiyu.former.category);
         Category.change(
-            [ObjectId(req.body.former.category)],
-            ObjectId(req.body.former.category),
+            [req.jiqiyu.former.category],
+            req.jiqiyu.former.category,
             [{
                 pid: req.jiqiyu.pid,
                 state: +state,
-                formerState: +req.body.former.pstate
+                formerState: +req.jiqiyu.former.pstate
             }],
             function(err, result) {
                 if (err) {
-                    console.log('!error! action.js line #762');
+                    console.log('!error! action.js #762');
                 }
                 next();
             });
@@ -1038,7 +1228,7 @@ exports.delTagById = function(req, res) {
 
     var user = req.session.user;
     if (!user || !user.level || (user.level < ul.editor) ) {
-        return res.send('你沒有編輯標籤的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
 
     var tagid = ObjectId(req.params[0]);
@@ -1051,54 +1241,69 @@ exports.delTagById = function(req, res) {
 exports.tagRename = function(req, res) {
 
     var user = req.session.user;
-    if (!user || !user.level || (user.level < ul.editor) ) {
-        return res.send('你沒有編輯標籤的權限，<a href="javascript:history.back();">點這裡返回上一頁</a>');
+    if (!Fn.auth(user, 'editor', ul)) {
+        return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
 
     var tagid = ObjectId(req.params[0]);
-    var newname = req.query.newname;
+    var newname = Fn.trim(req.query.newname);
+    
+    if (/,+/.test(newname) || newname.length > 20 ) {
+        return res.send('標籤名格式不對，<a href="javascript:history.back();">返回</a>');
+    }
+    
     Tag.rename(tagid, newname, function(err) {
         res.send(err);
     });
+    
 };
 
 exports.submitEdits = function(req, res) {
 
     var article = {};
-
-    if (req.body.pstate) {
+    console.log(req.body.pstate);
+    if (Fn.isPostState(req.body.pstate)) {
         article.state = +req.body.pstate;
+        console.log('here####', article.state);
     }
-    if (req.body.tag) {
+    var state = article.state || +req.jiqiyu.former.pstate;
+    if (req.body.tag !== undefined && Fn.getReqStr(req.body.tag)) { console.log('1111100');
         article.tagid = req.jiqiyu.tagId;
-        var state = article.state || +req.body.former.pstate;
         Tag.updatePostId(
             req.body.untag,
             req.body.ntag,
             req.jiqiyu.pid,
             state,
-            req.body.former.pstate
+            req.jiqiyu.former.pstate
         );
-    } else if (article.state) {
-        var tagArr = req.body.former.tag.split(',');
-        Tag.updatePostId(tagArr, tagArr, req.jiqiyu.pid,
-                         state, req.body.former.pstate);
+    } else if (article.state) { console.log('1111122');
+        if (Fn.getReqStr(req.body.former.tag)) {
+            var tagArr = req.body.former.tag.split(',');
+            Tag.updatePostId(tagArr, tagArr, req.jiqiyu.pid,
+                             state, req.jiqiyu.former.pstate);
+        }
     }
-    if (req.body.commentoff) {
-        article.commentoff = req.body.commentoff;
+    if (req.body.commentoff !== undefined) {
+        article.commentoff = Fn.parseBool(req.body.commentoff);
     }
-    if (req.body.category && !req.body.newcatname) {
+    if (Fn.isObjectIdString(req.body.category) && !req.body.newcatname) {
         article.catid = [ObjectId(req.body.category)];
     }
     if (req.jiqiyu.newCatIdArr && req.jiqiyu.newCatIdArr.length > 0) {
         article.catid = req.jiqiyu.newCatIdArr;
     }
-    if (req.body.title) {
-        article.title = req.body.title;
+    if (req.body.title !== undefined) {
+        article.title = Fn.getReqStr(req.body.title);
+        if (!article.title) {
+            return res.send('標題不可以留空');
+        }
     }
-    if (req.body.content) {
-        article.original = req.body.content;
-        var tempstring = req.body.content
+    if (req.body.content !== undefined) {
+        article.original =  Fn.getReqStr(req.body.content);
+        if (!article.original || article.original === '[[!more]]') {
+            return res.send('內容不可以留空');
+        }
+        var tempstring = Fn.getReqStr(req.body.content)
                            .replace(/<([^> ]+)/gi,"&lt;$1")
                              .replace(/<\/([^> ]+)/gi, "&lt;$1");
 
@@ -1142,7 +1347,8 @@ exports.submitEdits = function(req, res) {
         tempstring = parser.render(tempstring);
         
         if (req.body.more !== undefined) {
-            if (+req.body.more === -1) {
+            var reMore = /\[\[\!more\]\]/gi;
+            if (isNaN(+req.body.more) || +req.body.more === -1) {
                 article.more = false;
             } else {
                 article.more = tempstring.indexOf('[[!more]]');
@@ -1150,20 +1356,21 @@ exports.submitEdits = function(req, res) {
                     article.more = false;
                     console.log('error of cannot find [[!more]]');
                 } else {
-                    tempstring = tempstring.replace('[[!more]]', '', 'gi');
+                    tempstring = tempstring.replace(reMore, '');
                 }
             }
         } else {
-            if (+req.body.former.more !== -1) {
-                tempstring = tempstring.replace('[[!more]]', '', 'gi');
+            if (!isNaN(+req.jiqiyu.former.more) &&
+                +req.jiqiyu.former.more !== -1) {
+                tempstring = tempstring.replace(reMore, '');
             }
         }
         article.content = tempstring;
     }
-    if (req.body.at) {
-        article.appointed_time = req.body.at;
-        article.year = req.body.year;
-        article.month = req.body.month;
+    if (Fn.chkTimestamp(req.body.at)) {
+        article.appointed_time = +req.body.at;
+        article.year = new Date(+req.body.at).getFullYear();
+        article.month = new Date(+req.body.at).getMonth();
         if (req.jiqiyu.draftProp.isprivate !== undefined) {
             article.isprivate = req.jiqiyu.draftProp.isprivate;
         }
@@ -1171,23 +1378,29 @@ exports.submitEdits = function(req, res) {
             article.ontop = req.jiqiyu.draftProp.ontop;
         }
     }
-    if (req.body.author) {
-        var au = req.body.author.split(',');
-        article.authorid = ObjectId(au[0]);
-        if (+au[1] > ul.author) {
-            article.level = +au[1];
-        }
-        // User.switchAuthor();
+    // if (req.body.author = Fn.getReqStr(req.body.author)) {
+    //     var au = req.body.author.split(',');
+    //     if (Fn.isObjectIdString(au[0])) {
+    //         // return res.send('error');
+    //     }
+    //     article.authorid = ObjectId(au[0]);
+    //     if (+au[1] > ul.author) {
+    //         article.level = +au[1];
+    //     }
+    //     // User.switchAuthor();
+    // }
+    if (/^\d{13}$/.test(req.body.last_edit)) {
+        article.last_edit = +req.body.last_edit;
     }
-    article.last_edit = '此前更新於' + req.body.last_edit + ' by ' + req.cookies.name;
-    
+    article.last_edit_user = req.cookies.name;
     Post.edit(req.jiqiyu.pid, article, function(err, result) {
         if (err) { return res.send('出錯了'); }
-        // todo: update user's postid, ppostid or draftid
         var resp = ' 文章已更新 | <a href="/post/' +req.params[0]+ '">看下</a>';
         res.send({
             result: resp,
-            last_edit: article.last_edit,
+            last_edit: '此前更新於' +
+                new Date(article.last_edit).toLocaleString("zh-Hans-CN") +
+                ' by ' + req.cookies.name,
             catIdArr: req.jiqiyu.newCatIdArr
         });
     });
@@ -1196,22 +1409,22 @@ exports.submitEdits = function(req, res) {
 
 exports.saveDraft = function(req, res) {
 
-    //
+    // todo
 
 };
 
 exports.uploads = function(req, res) {
 
-    if (!req.session.user || req.session.user.level < ul.author) {
-        return res.send('權限不夠');
+    if (!Fn.auth(req.session.user, 'author', ul)) {
+        return res.send('權限不足');
     }
 
 };
 
 exports.uploading = function(req, res) {
 
-    if (!req.session.user || req.session.user.level < ul.author) {
-        return res.send('你沒有上傳資料的權限');
+    if (!Fn.auth(req.session.user, 'author', ul)) {
+        return res.send('權限不足');
     }
     
     var name = req.files.file.name;

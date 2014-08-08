@@ -72,40 +72,40 @@ Tag.updatePostId = function(unTagNameArr, newTagNameArr, pid, state, formerState
         switch (+state) {
         case pstate.post:
         case pstate.ontop:
-            var field = {postid: pid};
+            var field1 = {postid: pid};
             break;
         case pstate.ppost + pstate.ontop:
         case pstate.ppost:
-            var field = {ppostid: pid};
+            var field1 = {ppostid: pid};
             break;
         default:
-            return console.log('heeeeeeeeeeere: ' + field + pstate.post);
+            return console.log('2heeeeeeeeeeere: ' + field + pstate.post);
+        }
+        switch (+formerState) {
+        case pstate.post:
+        case pstate.ontop:
+            var field2 = {postid: pid};
+            break;
+        case pstate.ppost + pstate.ontop:
+        case pstate.ppost:
+            var field2 = {ppostid: pid};
+            break;
+        default: 
+            return console.log('22heeeeeeeeeeere: ' + field + pstate.post);
         }
         db.collection('tag').update(
-            {name: {$in: newTagNameArr}},
-            {$push: field},
+            {name: {$in: unTagNameArr}},
+            {$pull: field2},
             {multi: true, w: 0},
             function(err, result) {
-                if (err) { console.log('!error! tag.js line #87'); }
-                switch (+formerState) {
-                case pstate.post:
-                case pstate.ontop:
-                    field = {postid: pid};
-                    break;
-                case pstate.ppost + pstate.ontop:
-                case pstate.ppost:
-                    field = {ppostid: pid};
-                    break;
-                case pstate.draft:
-                    return;
-                }
+                if (err) { console.log('!error! tag.js #101,62'); }
                 db.collection('tag').update(
-                    {name: {$in: unTagNameArr}},
-                    {$pull: field},
+                    {name: {$in: newTagNameArr}},
+                    {$push: field1},
                     {multi: true, w: 0},
                     function(err, result) {
                         db.close();
-                        if (err) { return console.log('!error! tag.js line #95'); }
+                        if (err) { return console.log('!error! tag.js #108,75'); }
                     });
             });
     });
