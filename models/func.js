@@ -33,7 +33,7 @@ Fn.parseBool = function(arg) {
     case 'number':
         return arg !== 0;
     case 'object':
-        return !isEmptyObject(arg);
+        return !Fn.isEmptyObject(arg);
     default:
         return arg;
     }
