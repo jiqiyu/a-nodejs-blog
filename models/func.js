@@ -45,11 +45,13 @@ Fn.auth = function(
     geRoleStr, /* great equal than */
     ul /* conf.js userLevel */
 ) {
+    
     if (!userSession || !userSession.level ||
         (userSession.level < ul[geRoleStr])) {
         return false;
     }
     return true;
+    
 };
 
 Fn.trim = function(str) {

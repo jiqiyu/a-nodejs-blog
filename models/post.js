@@ -42,6 +42,7 @@ Post.checkAppointment = function(callback) {
             var formerIdsArr = [];
             var postsArr = [];
             var now = Date.now();
+            var aptCacheArr = [];
 
             collection.find(
                 {$and: [{appointed_time: {$exists: true}},
@@ -50,11 +51,14 @@ Post.checkAppointment = function(callback) {
             ).each(function(err, item) {
                 if (err) {
                     db.close();
-                    callback(err);
+                    return callback(err);
+                }
+                if (item) {
+                    aptCacheArr.push(item);
                 }
                 if (item === null) {
                     db.close();
-                    callback(null, formerIdsArr, postsArr);
+                    callback(null, aptCacheArr, formerIdsArr, postsArr);
                 } else if (item.appointed_time <= now ) {
                     var timestamp = Math.floor(item.appointed_time/1000);
                     formerIdsArr.push(item._id);
