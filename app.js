@@ -16,6 +16,10 @@ var conf = require('./conf');
 
 var app = express();
 
+// global
+__indexCache = conf.cache.index ?
+    { /* appointPosts, topPosts, posts, pageInfo, cat, tag */ } : -1;
+
 // all environments
 app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');

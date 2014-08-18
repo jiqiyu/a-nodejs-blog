@@ -108,6 +108,7 @@ exports.delUser = function(req, res) {
         return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
     
+    __indexCache = undefined;
     var userid = ObjectId(req.params[0]);
     User.del(userid, function(err) {
         if (err) {
@@ -141,6 +142,7 @@ exports.editUser = function(req, res) {
         return res.send('err: intro too long');
     }
     
+    __indexCache = undefined;
     User.edit(username, data, function(err) {
         if (err) {
             console.log(err);
@@ -162,26 +164,44 @@ exports.loadCategoryTree = function(req, res, next) {
         }
     }
 
-    Category.tree(function(err, count, depth, rootleaf, parent, child, leaf) {
-        if (err) {
-            req.jiqiyu.cat = '分類加載失敗了，刷新試下';
-            next();
-        }
-        if (count === 0) {
-            req.jiqiyu.cat = '暫無';
-            next();
-        } else if (depth === 0) {
+    // check cache
+    if (__indexCache !== -1 && __indexCache &&
+        Fn.parseBool(__indexCache.cat)) {
+        req.jiqiyu.cat = __indexCache.cat;
+        next();
+    } else {
+
+        Category.tree(function(err, count, depth, rootleaf, parent, child, leaf) {
+            if (err) {
+                req.jiqiyu.cat = '分類加載失敗了，刷新試下';
+                __indexCache.cat = req.jiqiyu.cat;
+                next();
+            }
+            if (count === 0) {
+                req.jiqiyu.cat = '暫無';
+                if (__indexCache !== -1 && __indexCache) {
+                    __indexCache.cat = req.jiqiyu.cat;
+                }
+                next();
+            } else if (depth === 0) {
                 req.jiqiyu.cat = {};
                 req.jiqiyu.cat.unfold = rootleaf;
+                if (__indexCache !== -1 && __indexCache) {
+                    __indexCache.cat = req.jiqiyu.cat;
+                }
                 next();
-        } else if (depth > 0) {
-            req.jiqiyu.cat = {};
-            Category.countPosts(parent, child, depth);
-            req.jiqiyu.cat.unfold = Category.walk(parent, child, leaf, 0, depth, []);
-            req.jiqiyu.cat.unfold = req.jiqiyu.cat.unfold.concat(rootleaf);
-            next();
-        }
-    });
+            } else if (depth > 0) {
+                req.jiqiyu.cat = {};
+                Category.countPosts(parent, child, depth);
+                req.jiqiyu.cat.unfold = Category.walk(parent, child, leaf, 0, depth, []);
+                req.jiqiyu.cat.unfold = req.jiqiyu.cat.unfold.concat(rootleaf);
+                if (__indexCache !== -1 && __indexCache) {
+                    __indexCache.cat = req.jiqiyu.cat;
+                }
+                next();
+            }
+        });
+    }
     
 };
 
@@ -378,6 +398,7 @@ exports.getCatId = function(req, res, next) {
 
 exports.postNew = function(req, res, next) {
 
+    __indexCache = undefined;
     req.jiqiyu.postNew = true; // used in upsProperty function
     var user = req.jiqiyu.user;
     var post = {};
@@ -636,6 +657,7 @@ exports.post = function(req, res) {
 
 exports.delPostsById = function(req, res, next) {
 
+    __indexCache = undefined;
     req.jiqiyu = req.jiqiyu || {};
     var pidArr = [ObjectId(req.params[0])];
     var user = req.jiqiyu.user = req.session.user;
@@ -733,6 +755,7 @@ exports.catNew = function(req, res) {
         !(req.body.catname = Fn.getReqStr(req.body.catname))) {
         return res.send('error #762,36');
     }
+    __indexCache = undefined;
     var parent = req.body.parent.split(',');   
     cat.name = req.body.catname;
     if (catname.length > 20) {
@@ -771,6 +794,7 @@ exports.catEdit = function(req, res) {
     }
     // var catObj = req.body.obj;
     // if ()
+    __indexCache = undefined;
     Category.edit(req.body.obj, function(err, data) {
         if (err) {
             return res.send({err: err});
@@ -790,6 +814,7 @@ exports.catDelOne = function(req, res) {
     if (!Fn.isObjectIdString(req.query.id)) {
         return res.send('####error#### action.js #791,54');
     }
+    __indexCache = undefined;
     var cat = [ObjectId(req.query.id)];
     var subcat = req.query.subcat ?
         req.query.subcat.split(',') : [];
@@ -889,6 +914,7 @@ exports.editPostForm = function(req, res) {
 
 exports.editPostProp = function(req, res, next) {
 
+    __indexCache = undefined;
     req.jiqiyu = req.jiqiyu || {};
 
     var user = req.jiqiyu.user = req.session.user;
@@ -1231,6 +1257,7 @@ exports.delTagById = function(req, res) {
         return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
 
+    __indexCache = undefined;
     var tagid = ObjectId(req.params[0]);
     Tag.delById(tagid, function(err) {
         res.send(err);
@@ -1245,6 +1272,7 @@ exports.tagRename = function(req, res) {
         return res.send('權限不足，<a href="javascript:history.back();">點這裡返回上一頁</a>');
     }
 
+    __indexCache = undefined;
     var tagid = ObjectId(req.params[0]);
     var newname = Fn.trim(req.query.newname);
     

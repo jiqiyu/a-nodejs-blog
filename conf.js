@@ -40,6 +40,8 @@ module.exports = {
                                      postsMoreThan的標籤 */
               },
     
+    cache: { index: true // make it true|false to turn on|off cache
+           },
 
     /*------Do not alter follows 不要修改下面的內容 -----------*/
     userLevel: { su: 3,

@@ -405,6 +405,7 @@ exports.manageUser = function(req, res) {
     }
         
     recountDb();
+    __indexCache = undefined;
     User.all(function(err, users) {
         if (err) {
             return res.send(err);
