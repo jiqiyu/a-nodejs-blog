@@ -758,7 +758,7 @@ exports.catNew = function(req, res) {
     __indexCache = undefined;
     var parent = req.body.parent.split(',');   
     cat.name = req.body.catname;
-    if (catname.length > 20) {
+    if (cat.name.length > 20) {
         return res.send('error #772,36');
     }
     cat.depth = (+parent[1] + 1) || 0;
