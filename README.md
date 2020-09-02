@@ -1,7 +1,6 @@
 # A Node.js Blog
 
-Demo site: [mingri.org](http://mingri.org)  
-Username: demo(super user) Password: demo123456  
+
 
 # How to Install
 
